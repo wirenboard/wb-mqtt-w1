@@ -39,7 +39,7 @@ class TMQTTOnewireHandler : public TMQTTWrapper
         inline void SetPrepareInit(bool b) { PrepareInit = b; }// changing bool PrepareInit
         inline bool GetPrepareInit() { return PrepareInit; }
     private:
-        vector<TSysfsOnewireDevice> Channels;
+        vector<TSysfsOnewireDevice*> Channels;
         bool PrepareInit;// needed for cleaning mqtt messages before start working
         string Retained_old;// we need some message to be sure, that we got all retained messages in starting
 
@@ -66,7 +66,7 @@ void TMQTTOnewireHandler::OnConnect(int rc)
 	if(rc == 0){
                 // Meta
         string path = string("/devices/") + MQTTConfig.Id + "/meta/name";
-        Publish(NULL, path, "1-wire Thermometers", 0, true);
+        Publish(NULL, path, "1-wire Devices", 0, true);
 
 
         if (PrepareInit){
@@ -81,12 +81,12 @@ void TMQTTOnewireHandler::OnConnect(int rc)
 }
 
 template<typename T>
-void UnorderedVectorDifference(const vector<T> &first, const vector<T>& second, vector<T> & result)
+void UnorderedVectorDifference(const vector<T*> &first, const vector<T*> &second, vector<T*> &result)
 {
     for (auto & el_first: first) {
         bool found = false;
         for (auto & el_second: second) {
-            if (el_first == el_second) {
+            if (*el_first == *el_second) {
                 found = true;
                 break;
             }
@@ -100,7 +100,7 @@ void UnorderedVectorDifference(const vector<T> &first, const vector<T>& second, 
 
 void TMQTTOnewireHandler::RescanBus()
 {
-    vector<TSysfsOnewireDevice> current_channels;
+    vector<TSysfsOnewireDevice*> current_channels;
 
     DIR *dir;
     struct dirent *ent;
@@ -110,11 +110,9 @@ void TMQTTOnewireHandler::RescanBus()
         while ((ent = readdir (dir)) != NULL) {
             printf ("%s\n", ent->d_name);
             entry_name = ent->d_name;
-            if (StringStartsWith(entry_name, "28-") ||
-                StringStartsWith(entry_name, "10-") ||
-                StringStartsWith(entry_name, "22-") )
-            {
-                    current_channels.emplace_back(entry_name);
+            TSysfsOnewireDevice* device = TSysfsOnewireDevice::createInstance(entry_name);
+            if (device != NULL) {
+                current_channels.emplace_back(device);
             }
         }
         closedir (dir);
@@ -122,23 +120,25 @@ void TMQTTOnewireHandler::RescanBus()
         cerr << "ERROR: could not open directory " << SysfsOnewireDevicesPath << endl;
     }
 
-    vector<TSysfsOnewireDevice> new_channels;
+    vector<TSysfsOnewireDevice*> new_channels;
     UnorderedVectorDifference(current_channels, Channels, new_channels);
 
-    vector<TSysfsOnewireDevice> absent_channels;
+    vector<TSysfsOnewireDevice*> absent_channels;
     UnorderedVectorDifference(Channels, current_channels, absent_channels);
-
 
     Channels.swap(current_channels);
 
-    for (const TSysfsOnewireDevice& device: new_channels) {
-        Publish(NULL, GetChannelTopic(device) + "/meta/type", "temperature", 0, true);
+    for (const TSysfsOnewireDevice* device: new_channels) {
+        vector<string> DeviceMQTTParams = (*device).getDeviceMQTTParams();
+        for (int i=0; i<DeviceMQTTParams.size(); i=i+2) {
+            Publish(NULL, GetChannelTopic(*device) + DeviceMQTTParams[i], DeviceMQTTParams[i + 1], 0, true);
+        }
     }
 
     //delete retained messages for absent channels
-    for (const TSysfsOnewireDevice& device: absent_channels) {
-        Publish(NULL, GetChannelTopic(device) + "/meta/type", "", 0, true);
-        Publish(NULL, GetChannelTopic(device), "", 0, true);
+    for (const TSysfsOnewireDevice* device: absent_channels) {
+        Publish(NULL, GetChannelTopic(*device) + "/meta/type", "", 0, true);
+        Publish(NULL, GetChannelTopic(*device), "", 0, true);
     }
 }
 
@@ -152,11 +152,15 @@ void TMQTTOnewireHandler::OnMessage(const struct mosquitto_message *message)
         unsubscribe(NULL, (controls_prefix + "+").c_str());
         PrepareInit = false;
     }else {
-        string device = topic.substr(controls_prefix.length(), topic.length());
-        for (auto& current : Channels)
-            if (device == current.GetDeviceId())
+        string device_name = topic.substr(controls_prefix.length(), topic.length());
+        for (auto current : Channels)
+            if (device_name == (*current).GetDeviceId())
                 return;
-        Channels.emplace_back(device);
+        TSysfsOnewireDevice* device = TSysfsOnewireDevice::createInstance(device_name);
+        if (device) {
+            // TODO check meta of retained devices
+            Channels.emplace_back(device);
+        }
     }
 
 }
@@ -173,10 +177,10 @@ string TMQTTOnewireHandler::GetChannelTopic(const TSysfsOnewireDevice& device) {
 
 void TMQTTOnewireHandler::UpdateChannelValues() {
 
-    for (const TSysfsOnewireDevice& device: Channels) {
-        auto result = device.ReadTemperature();
+    for (const TSysfsOnewireDevice* device: Channels) {
+        auto result = (*device).Read();
         if (result.Defined()) {
-            Publish(NULL, GetChannelTopic(device), StringFormat("%g",*result), 0, true); // Publish current value (make retained)
+            Publish(NULL, GetChannelTopic(*device), StringFormat("%g",*result), 0, true); // Publish current value (make retained)
         }
 
     }

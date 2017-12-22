@@ -10,6 +10,7 @@ const string SysfsOnewireDevicesPath = "/sys/bus/w1/devices/";
 enum class TOnewireFamilyType
 {
     ProgResThermometer = 0x28,
+    ProgResPotentiometer = 0x2c,
     Unknown = 0x00,
 };
 
@@ -21,18 +22,32 @@ public:
     inline TOnewireFamilyType GetDeviceFamily() const {return Family;};
     inline const string & GetDeviceId() const {return DeviceId;};
 
-    TMaybe<float> ReadTemperature() const;
+    virtual TMaybe<float> Read() const {return NotDefinedMaybe; }
+    static TSysfsOnewireDevice *createInstance(const string& device_name);
+    inline vector<string> getDeviceMQTTParams() const {return DeviceMQTTParams; }
 
     friend bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & second);
-private:
+protected:
     string DeviceName;
     TOnewireFamilyType Family;
     string DeviceId;
     string DeviceDir;
-
-
+    vector<string> DeviceMQTTParams;
 };
 
+class TTemperatureOnewireDevice : public TSysfsOnewireDevice {
+public:
+	TTemperatureOnewireDevice(const string& device_name);
+	TMaybe<float> Read() const;
+	vector<string> getDeviceMQTTParams();
+};
+
+class TPotentiometerOnewireDevice : public TSysfsOnewireDevice {
+public:
+	TPotentiometerOnewireDevice(const string& device_name);
+	TMaybe<float> Read() const;
+	vector<string> getDeviceMQTTParams();
+};
 
 class TSysfsOnewireManager
 {
