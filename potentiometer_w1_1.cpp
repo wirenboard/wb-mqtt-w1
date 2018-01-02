@@ -22,9 +22,8 @@ TPotentiometerOnewireDevice::TPotentiometerOnewireDevice(const string& device_na
 
 TMaybe<float> TPotentiometerOnewireDevice::Read() const
 {
-    std::string fileName=DeviceDir +"/rw";
     std::fstream file;
-    file.rdbuf()->pubsetbuf(0, 0);
+    std::string fileName=DeviceDir +"/rw";
     file.open(fileName.c_str());
     uint8_t result[2] = {0, 0};
     if (file.is_open()) {
@@ -56,36 +55,66 @@ TMaybe<float> TPotentiometerOnewireDevice::Write(float val) const
     file.rdbuf()->pubsetbuf(0, 0);
     file.open(fileName.c_str());
 
-    struct position_read_result { uint8_t config, value; };
+//    struct two_byte_buf { uint8_t byte1, byte2; };
+//
+//    uint8_t buf1;
+//    two_byte_buf buf2;
 
     // first read current value
-    uint8_t cmd_read = CMD_READ_POSITION;
-    position_read_result read_result;
-    file.write((char *) &cmd_read, 1);
-    file.read((char *) &read_result, 2); // first byte - control register, second byte - desired value
+//    buf1 = CMD_READ_POSITION;
+//    file.write((char *) &buf1, 1);
+//    file.read((char *) &buf2, 2); // first byte - control register, second byte - desired value
+//
+//    uint8_t int_val = val / SINGLE_STEP_RESISTENCE + 0.5;
+//    int delta = int_val - buf2.byte2;
+//    printf("delta %u %u %u\n", int_val, buf2.byte2, delta);
+//
+//    if (delta != 0) {
+//        uint8_t cmd = delta > 0 ? CMD_INCREMENT : CMD_DECREMENT;
+//        printf("cmd %u\n", cmd);
+//        if (delta < 0) {
+//            delta = -delta;
+//        }
+//        for (auto i = 1; i <= delta; i++) {
+//            printf("i %u\n", i);
+//            file.write((char *) &cmd, 1);
+//            file.read((char *) &buf1, 1);
+//            printf("was: %u; is: %u\n", buf2.byte2, buf1);
+//        }
+//    }
+//
+//    return SINGLE_STEP_RESISTENCE * buf1;
 
-    uint8_t int_val = val / SINGLE_STEP_RESISTENCE + 0.5;
-    int delta = int_val - read_result.value;
 
-    // 3.2v
-    if (delta != 0 && file.is_open()) {
-        uint8_t cmd_step = delta > 0 ? CMD_INCREMENT : CMD_DECREMENT;
-        uint8_t step_result = read_result.value;
-        if (delta < 0) {
-            delta = -delta;
-        }
-        for (auto i = 1; i <= 300; i++) {
-            // 300 iterations max, not 255 because there may be errors on chip update
-            file.write((char *) &cmd_step, 1);
-            file.read((char *) &step_result, 1);
-            if (step_result == int_val) {
-                // exit when value match
-                break;
-            }
-        }
+
+//    uint8_t buf[2] = {0x55, 0x4c};
+//    file.write((char *) &buf, 2);
+//
+//    file.read((char *) &rbuf, 1);
+//    printf("read conf %u\n", rbuf);
+//    rbuf = 0x96;
+//    file.write((char *) &rbuf, 1);
+//    file.read((char *) &rbuf, 1);
+//    printf("read conf %u\n", rbuf);
+
+//
+//    rbuf = 0xcc;
+//    file.write((char *) &rbuf, 1);
+//
+//
+    uint8_t result = 0;
+    uint8_t value = val / SINGLE_STEP_RESISTENCE + 0.5;
+    printf("write value %u\n", value);
+    if (file.is_open()) {
+        uint8_t write_cmd[3] = {CMD_WRITE_POSITION, value, CMD_RELEASE};
+        file.write((char *) &write_cmd, 3);
+
+        uint8_t read_cmd = CMD_READ_POSITION;
+        file.write((char *) &read_cmd, 1);
+        file.read((char *) &result, 1);
 
         file.close();
     }
 
-    return SINGLE_STEP_RESISTENCE * int_val;
+    return SINGLE_STEP_RESISTENCE * result;
 }

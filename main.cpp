@@ -42,7 +42,6 @@ class TMQTTOnewireHandler : public TMQTTWrapper
         vector<TSysfsOnewireDevice*> Channels;
         bool PrepareInit;// needed for cleaning mqtt messages before start working
         string Retained_old;// we need some message to be sure, that we got all retained messages in starting
-
 };
 
 
@@ -129,14 +128,16 @@ void TMQTTOnewireHandler::RescanBus()
     Channels.swap(current_channels);
 
     for (const TSysfsOnewireDevice* device: new_channels) {
+        // new devices connected
         vector<string> DeviceMQTTParams = (*device).getDeviceMQTTParams();
-        for (int i=0; i<DeviceMQTTParams.size(); i=i+2) {
+        for (uint16_t i=0; i<DeviceMQTTParams.size(); i=i+2) {
             Publish(NULL, GetChannelTopic(*device) + DeviceMQTTParams[i], DeviceMQTTParams[i + 1], 0, true);
         }
     }
 
-    //delete retained messages for absent channels
     for (const TSysfsOnewireDevice* device: absent_channels) {
+        // some devices were disconnected
+        // delete retained messages for absent channels
         Publish(NULL, GetChannelTopic(*device) + "/meta/type", "", 0, true);
         Publish(NULL, GetChannelTopic(*device), "", 0, true);
     }
@@ -145,11 +146,33 @@ void TMQTTOnewireHandler::RescanBus()
 void TMQTTOnewireHandler::OnMessage(const struct mosquitto_message *message)
 {
     string topic = message->topic;
+    string payload = message->payloadlen > 0 ? (char *) message->payload : "";
     string controls_prefix = string("/devices/") + MQTTConfig.Id + "/controls/";
+
+    if (!PrepareInit) {
+        // handler is initiated, processing value change events
+        if (topic.length() > 40) {
+            string device_name = topic.substr(24, 15);
+            // printf("set %s = %s\n", device_name.c_str(), payload.c_str());
+            for (auto device_ptr : Channels) {
+                if ((*device_ptr).GetDeviceId() == device_name) {
+                    auto result = (*device_ptr).Write(strtof(payload.c_str(), NULL));
+                    if (result.Defined()) {
+                        Publish(NULL, GetChannelTopic(*device_ptr), StringFormat("%g",*result), 0, true);
+                    }
+                }
+            }
+        }
+        return;
+    }
+
+    // handler is being initiated, collecting existing devices
     if (topic == Retained_old) {// if we get old_message it means that we've read all retained messages
         Publish(NULL, Retained_old, "", 0, true);
         unsubscribe(NULL, Retained_old.c_str());
         unsubscribe(NULL, (controls_prefix + "+").c_str());
+        // subscribe to value change events
+        Subscribe(NULL, controls_prefix + "+/on");
         PrepareInit = false;
     }else {
         string device_name = topic.substr(controls_prefix.length(), topic.length());
