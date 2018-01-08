@@ -7,6 +7,8 @@
 #include <string>
 #include "sysfs_w1.h"
 
+struct position_read_result { uint8_t config, value; };
+
 TPotentiometerOnewireDevice::TPotentiometerOnewireDevice(const string& device_name)
     : TSysfsOnewireDevice(device_name)
 {
@@ -26,7 +28,7 @@ TMaybe<float> TPotentiometerOnewireDevice::Read() const
     std::fstream file;
     file.rdbuf()->pubsetbuf(0, 0);
     file.open(fileName.c_str());
-    uint8_t result[2] = {0, 0};
+    position_read_result result;
     if (file.is_open()) {
         uint8_t buffer = CMD_READ_POSITION;
         file.write((char *) &buffer, 1);
@@ -34,7 +36,7 @@ TMaybe<float> TPotentiometerOnewireDevice::Read() const
         file.close();
     }
 
-    return SINGLE_STEP_RESISTENCE * result[1];
+    return SINGLE_STEP_RESISTENCE * result.value;
 }
 
 /*
@@ -56,8 +58,6 @@ TMaybe<float> TPotentiometerOnewireDevice::Write(float val) const
     file.rdbuf()->pubsetbuf(0, 0);
     file.open(fileName.c_str());
 
-    struct position_read_result { uint8_t config, value; };
-
     // first read current value
     uint8_t cmd_read = CMD_READ_POSITION;
     position_read_result read_result;
@@ -67,7 +67,6 @@ TMaybe<float> TPotentiometerOnewireDevice::Write(float val) const
     uint8_t int_val = val / SINGLE_STEP_RESISTENCE + 0.5;
     int delta = int_val - read_result.value;
 
-    // 3.2v
     if (delta != 0 && file.is_open()) {
         uint8_t cmd_step = delta > 0 ? CMD_INCREMENT : CMD_DECREMENT;
         uint8_t step_result = read_result.value;

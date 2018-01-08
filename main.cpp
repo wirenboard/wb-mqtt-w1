@@ -129,7 +129,7 @@ void TMQTTOnewireHandler::RescanBus()
 
     for (const TSysfsOnewireDevice* device: new_channels) {
         // new devices connected
-        vector<string> DeviceMQTTParams = (*device).getDeviceMQTTParams();
+        vector<string> DeviceMQTTParams = device->getDeviceMQTTParams();
         for (uint16_t i=0; i<DeviceMQTTParams.size(); i=i+2) {
             Publish(NULL, GetChannelTopic(*device) + DeviceMQTTParams[i], DeviceMQTTParams[i + 1], 0, true);
         }
@@ -154,11 +154,11 @@ void TMQTTOnewireHandler::OnMessage(const struct mosquitto_message *message)
         if (topic.length() > 40) {
             string device_name = topic.substr(24, 15);
             // printf("set %s = %s\n", device_name.c_str(), payload.c_str());
-            for (auto device_ptr : Channels) {
-                if ((*device_ptr).GetDeviceId() == device_name) {
-                    auto result = (*device_ptr).Write(strtof(payload.c_str(), NULL));
+            for (auto device : Channels) {
+                if (device->GetDeviceId() == device_name) {
+                    auto result = device->Write(strtof(payload.c_str(), NULL));
                     if (result.Defined()) {
-                        Publish(NULL, GetChannelTopic(*device_ptr), StringFormat("%g",*result), 0, true);
+                        Publish(NULL, GetChannelTopic(*device), StringFormat("%g",*result), 0, true);
                     }
                 }
             }
@@ -177,7 +177,7 @@ void TMQTTOnewireHandler::OnMessage(const struct mosquitto_message *message)
     }else {
         string device_name = topic.substr(controls_prefix.length(), topic.length());
         for (auto current : Channels)
-            if (device_name == (*current).GetDeviceId())
+            if (device_name == current->GetDeviceId())
                 return;
         TSysfsOnewireDevice* device = TSysfsOnewireDevice::createInstance(device_name);
         if (device) {
@@ -201,7 +201,7 @@ string TMQTTOnewireHandler::GetChannelTopic(const TSysfsOnewireDevice& device) {
 void TMQTTOnewireHandler::UpdateChannelValues() {
 
     for (const TSysfsOnewireDevice* device: Channels) {
-        auto result = (*device).Read();
+        auto result = device->Read();
         if (result.Defined()) {
             Publish(NULL, GetChannelTopic(*device), StringFormat("%g",*result), 0, true); // Publish current value (make retained)
         }

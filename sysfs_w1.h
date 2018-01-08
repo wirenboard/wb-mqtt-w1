@@ -55,10 +55,10 @@ public:
     const uint8_t CMD_DECREMENT = 0x99;
     const float SINGLE_STEP_RESISTENCE = 100000/255;
 
-	TPotentiometerOnewireDevice(const string& device_name);
-	TMaybe<float> Read() const;
-	TMaybe<float> Write(float val) const;
-	vector<string> getDeviceMQTTParams();
+    TPotentiometerOnewireDevice(const string& device_name);
+    TMaybe<float> Read() const;
+    TMaybe<float> Write(float val) const;
+    vector<string> getDeviceMQTTParams();
 };
 
 class TSysfsOnewireManager

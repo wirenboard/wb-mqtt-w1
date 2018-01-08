@@ -8,8 +8,8 @@ TTemperatureOnewireDevice::TTemperatureOnewireDevice(const string& device_name)
     : TSysfsOnewireDevice(device_name)
 {
     Family = TOnewireFamilyType::ProgResThermometer;
-	DeviceMQTTParams.push_back("/meta/type");
-	DeviceMQTTParams.push_back("temperature");
+    DeviceMQTTParams.push_back("/meta/type");
+    DeviceMQTTParams.push_back("temperature");
 }
 
 TMaybe<float> TTemperatureOnewireDevice::Read() const
