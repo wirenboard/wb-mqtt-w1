@@ -22,20 +22,25 @@ LDFLAGS= -lmosquittopp -lmosquitto -ljsoncpp -lwbmqtt1
 
 W1_BIN=wb-homa-w1
 
-.PHONY: all clean
+# W1
+W1_H=sysfs_w1.h
+W1_D=onewire_driver.h
+
+W1_SOURCES= 					\
+			sysfs_w1.cpp		\
+			onewire_driver.cpp 	\
+			exceptions.cpp		\
+			log.cpp				\
+
+W1_OBJECTS=$(W1_SOURCES:.cpp=.o)
 
 all : $(W1_BIN)
 
 # W1
-W1_H=sysfs_w1.h
-
-main.o : main.cpp $(W1_H)
+%.o : %.cpp
 	${CXX} -c $< -o $@ ${CFLAGS}
 
-sysfs_w1.o : sysfs_w1.cpp $(W1_H)
-	${CXX} -c $< -o $@ ${CFLAGS}
-
-$(W1_BIN) : main.o sysfs_w1.o
+$(W1_BIN) : main.o $(W1_OBJECTS)
 	${CXX} $^ ${LDFLAGS} -o $@
 
 
