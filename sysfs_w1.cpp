@@ -1,8 +1,24 @@
-#include <fstream>
-#include <string>
-#include <iostream>
-#include <sstream>
 #include "sysfs_w1.h"
+
+using namespace WBMQTT;
+
+template<typename T>
+void UnorderedVectorDifference(const vector<T> &first, const vector<T>& second, vector<T> & result)
+{
+    for (auto & el_first: first) {
+        bool found = false;
+        for (auto & el_second: second) {
+            if (el_first == el_second) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            result.push_back(el_first);
+        }
+    }
+}
 
 bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & second)
 {
@@ -19,7 +35,7 @@ TSysfsOnewireDevice::TSysfsOnewireDevice(const string& device_name)
     DeviceDir = SysfsOnewireDevicesPath + DeviceName;
 }
 
-TMaybe<float> TSysfsOnewireDevice::ReadTemperature() const
+TMaybeValue<float> TSysfsOnewireDevice::ReadTemperature() 
 {
     std::string data;
     bool bFoundCrcOk=false;
@@ -61,7 +77,7 @@ TMaybe<float> TSysfsOnewireDevice::ReadTemperature() const
         }
 
 
-        return (float) data_int/1000.0f; // Temperature given by kernel is in thousandths of degrees
+        return TMaybeValue<float>(data_int/1000.0f); // Temperature given by kernel is in thousandths of degrees
     }
 
     return NotDefinedMaybe;
@@ -69,4 +85,50 @@ TMaybe<float> TSysfsOnewireDevice::ReadTemperature() const
 
 void TSysfsOnewireManager::RescanBus()
 {
+    vector<TSysfsOnewireDevice> current_channels;
+
+    DIR *dir;
+    struct dirent *ent;
+    string entry_name;
+    if ((dir = opendir (SysfsOnewireDevicesPath.c_str())) != NULL) {
+        /* print all the files and directories within directory */
+        while ((ent = readdir (dir)) != NULL) {
+            printf ("%s\n", ent->d_name);
+            entry_name = ent->d_name;
+            if (StringStartsWith(entry_name, "28-") ||
+                StringStartsWith(entry_name, "10-") ||
+                StringStartsWith(entry_name, "22-") )
+            {
+                    current_channels.emplace_back(entry_name);
+            }
+        }
+        closedir (dir);
+    } else {
+        cerr << "ERROR: could not open directory " << SysfsOnewireDevicesPath << endl;
+    }
+
+    vector<TSysfsOnewireDevice> new_channels;
+    UnorderedVectorDifference(current_channels, Devices, new_channels);
+
+    vector<TSysfsOnewireDevice> absent_channels;
+    UnorderedVectorDifference(Devices, current_channels, absent_channels);
+
+
+    Devices.swap(current_channels);
+
+    for (const TSysfsOnewireDevice& device: new_channels) {
+
+        //Publish(NULL, GetChannelTopic(device) + "/meta/type", "temperature", 0, true);
+    }
+
+    //delete retained messages for absent channels
+    for (const TSysfsOnewireDevice& device: absent_channels) {
+        //Publish(NULL, GetChannelTopic(device) + "/meta/type", "", 0, true);
+        //Publish(NULL, GetChannelTopic(device), "", 0, true);
+    }
+}
+
+const vector<TSysfsOnewireDevice> TSysfsOnewireManager::GetDevices()
+{
+    return Devices;
 }
