@@ -10,13 +10,13 @@
 
 #include <wblib/wbmqtt.h>
 #include <wblib/signal_handling.h>
-
-#include "sysfs_w1.h"
+#include "onewire_driver.h"
+#include <wblib/utils.h>
+#include "log.h"
 
 using namespace std;
-using std::chrono::duration_cast;
-using std::chrono::milliseconds;
-using std::chrono::steady_clock;
+#define LOG(logger) ::logger.Log() << "[gpio] "
+
 
 const auto WBMQTT_DB_FILE = "/var/lib/wb-homa-w1/libwbmqtt.db";
 const auto W1_DRIVER_INIT_TIMEOUT_S = chrono::seconds(5);
@@ -44,14 +44,14 @@ int main(int argc, char *argv[])
     */
     WBMQTT::SignalHandling::SetWaitFor(W1_DRIVER_INIT_TIMEOUT_S, initialized.GetFuture(), [&]{
         //LOG(Error) << "Driver takes too long to initialize. Exiting.";
-        printf("Error: W1_DRIVER_INIT_TIMEOUT_S");
+        cerr << "Error: W1_DRIVER_INIT_TIMEOUT_S" << endl;
         exit(1); 
     });
 
     /* if handling of signal takes too much time: exit with error */
     WBMQTT::SignalHandling::SetOnTimeout(W1_DRIVER_STOP_TIMEOUT_S, [&]{
         //LOG(Error) << "Driver takes too long to stop. Exiting.";
-        printf("Error: W1_DRIVER_STOP_TIMEOUT_S");
+        cerr << "Error: W1_DRIVER_STOP_TIMEOUT_S" << endl;
         exit(2);
     });
     WBMQTT::SignalHandling::Start();
@@ -83,11 +83,12 @@ int main(int argc, char *argv[])
             printf ("?? getopt returned character code 0%o ??\n", c);
         }
     }
+    WBMQTT::Debug.SetEnabled(true);
 
     auto mqttDriver = WBMQTT::NewDriver(WBMQTT::TDriverArgs{}
         .SetBackend(WBMQTT::NewDriverBackend(WBMQTT::NewMosquittoMqttClient(mqttConfig)))
         .SetId(mqttConfig.Id)
-        .SetUseStorage(true)
+        .SetUseStorage(false)
         .SetReownUnknownDevices(true)
         .SetStoragePath(WBMQTT_DB_FILE)
     );
@@ -100,32 +101,28 @@ int main(int argc, char *argv[])
 
     mqttDriver->WaitForReady();
 
+    try {
+        TOneWireDriver w1_driver(mqttDriver);
 
-    
+        LOG(Info) << "Heyho: ";
 
-	auto time_last_published = steady_clock::now();
-
-    /*try {
-        //TGpioDriver gpioDriver(mqttDriver, GetConvertConfig(configFileName));
-
-        /*Utils::ClearMappingCache();
-
-        /*gpioDriver.Start();
+        w1_driver.Start();
 
         WBMQTT::SignalHandling::OnSignals({ SIGINT, SIGTERM }, [&]{
-            gpioDriver.Stop();
-            gpioDriver.Clear();
+            w1_driver.Stop();
+            w1_driver.Clear();
         });
 
         initialized.Complete();
         WBMQTT::SignalHandling::Wait();
-    } catch (const TGpioDriverException & e) {
+        
+    } catch (const TW1SensorDriverException & e) {
         LOG(Error) << "FATAL: " << e.what();
         return 1;
     } catch (const WBMQTT::TBaseException & e) {
         LOG(Error) << "FATAL: " << e.what();
         return 1;
-    }*/
+    }
 
 	//mosqpp::lib_cleanup();
 

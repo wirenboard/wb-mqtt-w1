@@ -65,7 +65,7 @@ public:
     void RescanBus();
 
     const vector<TSysfsOnewireDevice> GetDevices();
-
+    void ClearDevices(){ Devices.clear();}
 private:
     // FIXME: once found, device will be kept indefinetely
     // consider some kind of ref-counting smart vectors instead

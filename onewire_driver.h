@@ -1,5 +1,6 @@
 #include <wblib/wbmqtt.h>
 #include <wblib/declarations.h>
+#include <wblib/utils.h>
 #include "sysfs_w1.h"
 #include <iostream>
 #include <iostream>
@@ -27,10 +28,12 @@ class TOneWireDriver
         void Clear() noexcept;
 
     private:
-        TSysfsOnewireManager                OneWireManager;
-        std::atomic_bool                    Active;
         WBMQTT::PDeviceDriver               MqttDriver;
         WBMQTT::PDriverEventHandlerHandle   EventHandlerHandle;
+
+        TSysfsOnewireManager                OneWireManager;
+        std::atomic_bool                    Active;
+        std::unique_ptr<std::thread>        Worker;
 
         void RescanBus();
 

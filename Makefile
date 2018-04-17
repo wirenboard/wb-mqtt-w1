@@ -18,7 +18,7 @@ endif
 
 #CFLAGS=-Wall -ggdb -std=c++0x -O0 -I.
 CFLAGS=-Wall -std=c++0x -Os -I.
-LDFLAGS= -lmosquittopp -lmosquitto -ljsoncpp -lwbmqtt1
+LDFLAGS= -lmosquittopp -lmosquitto -ljsoncpp -lwbmqtt1 -lpthread
 
 W1_BIN=wb-homa-w1
 
