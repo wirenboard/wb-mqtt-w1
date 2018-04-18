@@ -1,6 +1,6 @@
 #include "onewire_driver.h"
 
-#define LOG(logger) ::logger.Log() << "[gpio driver] "
+#define LOG(logger) ::logger.Log() << "[w1 driver] "
 
 
 using namespace std;
@@ -34,7 +34,7 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : Mqtt
     // scan bus to detect devices 
     LOG(Debug) << "Start rescan";
     OneWireManager.RescanBus();
-    auto Sensors = OneWireManager.GetDevices();
+    auto Sensors = OneWireManager.GetDevicesP();
     LOG(Debug) << "Finish rescan";
 
     try {
@@ -87,17 +87,38 @@ void TOneWireDriver::Start()
     }
 
     Active.store(true);
-
     Worker = WBMQTT::MakeThread("W1 worker", {[this]{
         LOG(Info) << "Started";
 
+    vector<string> names;
+    vector<double> values;
+
         while (Active.load()) {
-        
-            auto tx     = MqttDriver->BeginTx();
-            auto device = tx->GetDevice(Name);
-            for (const auto sensor : OneWireManager.GetDevices()) {
-                device->GetControl(sensor.GetDeviceName())->SetValue(tx, static_cast<double>(55.66));
+            //read sensor data
+            names.clear();
+            values.clear();
+            for (const auto sensor : OneWireManager.GetDevicesP()) {
+
+                auto res = sensor.ReadTemperature();
+                if (res.IsDefined()) {
+                    names.push_back(sensor.GetDeviceName());
+                    values.push_back(res.GetValue());
+                }
             }
+
+            if (!names.empty()) {
+                auto tx     = MqttDriver->BeginTx();
+                auto device = tx->GetDevice(Name);
+
+                for (int i = 0; i < names.size(); i++) {
+                 LOG(Info) << "Publish: " << names[i];
+                    device->GetControl(names[i])->SetValue(tx, static_cast<double>(values[i]));
+                }
+
+            } else {
+                LOG(Info) << "Device list is emtpy";
+            }
+
         }
         LOG(Info) << "Stopped";
 

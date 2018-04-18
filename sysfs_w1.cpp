@@ -1,5 +1,8 @@
 #include "sysfs_w1.h"
 
+#define LOG(logger) ::logger.Log() << "[w1 device] "
+
+
 using namespace WBMQTT;
 
 template<typename T>
@@ -35,7 +38,7 @@ TSysfsOnewireDevice::TSysfsOnewireDevice(const string& device_name)
     DeviceDir = SysfsOnewireDevicesPath + DeviceName;
 }
 
-TMaybeValue<float> TSysfsOnewireDevice::ReadTemperature() 
+TMaybeValue<double> TSysfsOnewireDevice::ReadTemperature() const
 {
     std::string data;
     bool bFoundCrcOk=false;
@@ -63,21 +66,25 @@ TMaybeValue<float> TSysfsOnewireDevice::ReadTemperature()
 
 
     if (bFoundCrcOk) {
+        LOG(Info) << "CRC OK" << fileName;
+
         int data_int = std::stoi(data);
 
         if (data_int == 85000) {
             // wrong read
+            LOG(Info) << "Reading error at: " << fileName;
             return NotDefinedMaybe;
         }
 
         if (data_int == 127937) {
             // returned max possible temp, probably an error
             // (it happens for chineese clones)
+            LOG(Info) << "Returns with max value (error): " << fileName;
             return NotDefinedMaybe;
         }
 
-
-        return TMaybeValue<float>(data_int/1000.0f); // Temperature given by kernel is in thousandths of degrees
+        LOG(Info) << "Successful error at: " << fileName;
+        return TMaybeValue<double>(data_int/1000.0f); // Temperature given by kernel is in thousandths of degrees
     }
 
     return NotDefinedMaybe;
@@ -128,7 +135,7 @@ void TSysfsOnewireManager::RescanBus()
     }
 }
 
-const vector<TSysfsOnewireDevice> TSysfsOnewireManager::GetDevices()
+const vector<TSysfsOnewireDevice>& TSysfsOnewireManager::GetDevicesP() const
 {
     return Devices;
 }

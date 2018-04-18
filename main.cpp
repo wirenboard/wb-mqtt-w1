@@ -15,7 +15,7 @@
 #include "log.h"
 
 using namespace std;
-#define LOG(logger) ::logger.Log() << "[gpio] "
+#define LOG(logger) ::logger.Log() << "[w1] "
 
 
 const auto WBMQTT_DB_FILE = "/var/lib/wb-homa-w1/libwbmqtt.db";
@@ -103,8 +103,6 @@ int main(int argc, char *argv[])
 
     try {
         TOneWireDriver w1_driver(mqttDriver);
-
-        LOG(Info) << "Heyho: ";
 
         w1_driver.Start();
 

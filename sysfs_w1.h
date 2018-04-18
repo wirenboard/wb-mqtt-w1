@@ -7,6 +7,7 @@
 #include <string>
 #include <iostream>
 #include <sstream>
+#include "log.h"
 using namespace std;
 
 const string SysfsOnewireDevicesPath = "/sys/bus/w1/devices/";
@@ -19,22 +20,22 @@ enum class TOnewireFamilyType
 
 template<class T>
 class TMaybeValue {
-        bool isDefined;
+        bool isDefinedValue;
         T value;
     public:
         TMaybeValue () {
-            isDefined = false;
+            isDefinedValue = false;
         }
         TMaybeValue (T v) {
-            isDefined = true;
+            isDefinedValue = true;
             value = v;            
         }
 
-        const bool IsDefined() {return isDefined;}
+        const bool IsDefined() {return isDefinedValue;}
         const T GetValue() {return value;}
 
 };
-#define NotDefinedMaybe TMaybeValue<float>()
+#define NotDefinedMaybe TMaybeValue<double>()
 
 class TSysfsOnewireDevice
 {
@@ -44,7 +45,7 @@ public:
     inline TOnewireFamilyType GetDeviceFamily() const {return Family;};
     inline const string & GetDeviceId() const {return DeviceId;};
     inline const string & GetDeviceName() const {return DeviceName;};
-    TMaybeValue<float> ReadTemperature();
+    TMaybeValue<double> ReadTemperature() const;
 
     friend bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & second);
 private:
@@ -64,7 +65,7 @@ public:
 
     void RescanBus();
 
-    const vector<TSysfsOnewireDevice> GetDevices();
+    const vector<TSysfsOnewireDevice>& GetDevicesP() const;
     void ClearDevices(){ Devices.clear();}
 private:
     // FIXME: once found, device will be kept indefinetely
