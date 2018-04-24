@@ -33,40 +33,21 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : Mqtt
 {
     // scan bus to detect devices 
     LOG(Debug) << "Start rescan";
-    OneWireManager.RescanBus();
-    auto Sensors = OneWireManager.GetDevicesP();
     LOG(Debug) << "Finish rescan";
 
     try {
 
         auto tx = MqttDriver->BeginTx();
-        auto device = tx->CreateDevice(TLocalDeviceArgs{}
+
+        DeviceP = tx->CreateDevice(TLocalDeviceArgs{}
             .SetId(Name)
-            .SetTitle("test_title")
+            .SetTitle("1-wire Thermometers")
             .SetIsVirtual(true)
             .SetDoLoadPrevious(false)
         ).GetValue();
 
-        auto futureControl = TPromise<PControl>::GetValueFuture(nullptr);
-
-        for (const auto & sensor : Sensors) {
-            LOG(Debug) << "CreateControl for: " << sensor.GetDeviceId() << sensor.GetDeviceName();
-
-            futureControl = device->CreateControl(tx, TControlArgs{}
-                .SetId(sensor.GetDeviceName())
-                .SetType("temperature") //?
-                .SetReadonly( 0)
-            );
-        }
-
-        futureControl.Wait();   // wait for last control
-
-        if (Sensors.empty()) {
-            wb_throw(TW1SensorDriverException, "Failed to create any chip driver. Nothing to do");
-        }
-
     } catch (const exception & e) {
-        LOG(Error) << "Unable to create GPIO driver: " << e.what();
+        LOG(Error) << "Unable to create W1 driver: " << e.what();
         throw;
     }
 }
@@ -90,43 +71,103 @@ void TOneWireDriver::Start()
     Worker = WBMQTT::MakeThread("W1 worker", {[this]{
         LOG(Info) << "Started";
 
-    vector<string> names;
-    vector<double> values;
+        vector<string> names;
+        vector<double> values;
 
         while (Active.load()) {
-            //read sensor data
-            names.clear();
-            values.clear();
-            for (const auto sensor : OneWireManager.GetDevicesP()) {
 
-                auto res = sensor.ReadTemperature();
-                if (res.IsDefined()) {
-                    names.push_back(sensor.GetDeviceName());
-                    values.push_back(res.GetValue());
-                }
-            }
+                UpdateControls();        
+                //read sensor data
+                names.clear();
+                values.clear();
+                for (const auto sensor : OneWireManager.GetDevicesP()) {
 
-            if (!names.empty()) {
-                auto tx     = MqttDriver->BeginTx();
-                auto device = tx->GetDevice(Name);
-
-                for (int i = 0; i < names.size(); i++) {
-                 LOG(Info) << "Publish: " << names[i];
-                    device->GetControl(names[i])->SetValue(tx, static_cast<double>(values[i]));
+                    auto res = sensor.ReadTemperature();
+                    if (res.IsDefined()) {
+                        names.push_back(sensor.GetDeviceName());
+                        values.push_back(res.GetValue());
+                    }
                 }
 
-            } else {
-                LOG(Info) << "Device list is emtpy";
+                if (!names.empty()) {
+                    auto tx     = MqttDriver->BeginTx();
+                    auto device = tx->GetDevice(Name);
+
+                    for (unsigned int i = 0; i < names.size(); i++) {
+                    LOG(Info) << "Publish: " << names[i];
+                        device->GetControl(names[i])->SetValue(tx, static_cast<double>(values[i]));
+                    }
+
+                } else {
+                    LOG(Info) << "Device list is emtpy";
+                }
+
             }
+            LOG(Info) << "Stopped";
+
 
         }
-        LOG(Info) << "Stopped";
-
-
-    }});
+    });
 
 }
 
+template<typename T>
+void UnorderedVectorDifference(const vector<T> &first, const vector<T>& second, vector<T> & result)
+{
+    for (auto & el_first: first) {
+        bool found = false;
+        for (auto & el_second: second) {
+            if (el_first == el_second) {
+                found = true;
+                break;
+            }
+        }
+
+        if (!found) {
+            result.push_back(el_first);
+        }
+    }
+}
+
+void TOneWireDriver::UpdateControls()
+{
+    LOG(Info) << "Start UpdateControls";
+
+    auto oldSensors = OneWireManager.GetDevicesP();
+    OneWireManager.RescanBus();
+    auto actualSensors = OneWireManager.GetDevicesP();
+    for (auto sensor : actualSensors) {
+        LOG(Info) << "Scanned sensor: " << sensor.GetDeviceId() << sensor.GetDeviceName();
+     }
+
+
+    vector<TSysfsOnewireDevice> addSensors;
+    UnorderedVectorDifference(actualSensors, oldSensors, addSensors);
+
+    vector<TSysfsOnewireDevice> removeSensors;
+    UnorderedVectorDifference(oldSensors, actualSensors, removeSensors);
+   
+    auto tx = MqttDriver->BeginTx();
+    auto futureControl = TPromise<PControl>::GetValueFuture(nullptr);
+
+    for (const auto sensor : addSensors) {
+        LOG(Info) << "CreateControl for: " << sensor.GetDeviceId() << sensor.GetDeviceName();
+        
+
+        futureControl = DeviceP->CreateControl(tx, TControlArgs{}
+            .SetId(sensor.GetDeviceName())
+            .SetType("temperature")
+            .SetReadonly( 0)
+        );     
+    }
+
+    futureControl.Wait();   // wait for last control
+
+    for (const auto sensor : removeSensors) {
+        LOG(Info) << "RemoveControl for: " << sensor.GetDeviceId() << sensor.GetDeviceName();
+        DeviceP->RemoveControl (tx, sensor.GetDeviceName());    
+    }
+}
 
 void TOneWireDriver::Stop()
 {

@@ -1,3 +1,4 @@
+#pragma once
 #include <wblib/wbmqtt.h>
 #include <wblib/declarations.h>
 #include <wblib/utils.h>
@@ -28,13 +29,13 @@ class TOneWireDriver
         void Clear() noexcept;
 
     private:
-        WBMQTT::PDeviceDriver               MqttDriver;
-        WBMQTT::PDriverEventHandlerHandle   EventHandlerHandle;
+        WBMQTT::PDeviceDriver              MqttDriver;
+        WBMQTT::PDriverEventHandlerHandle  EventHandlerHandle;
+        shared_ptr<WBMQTT::TLocalDevice>   DeviceP;
 
         TSysfsOnewireManager                OneWireManager;
         std::atomic_bool                    Active;
         std::unique_ptr<std::thread>        Worker;
-
         void RescanBus();
-
+        void UpdateControls();
 };
