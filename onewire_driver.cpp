@@ -90,10 +90,16 @@ void TOneWireDriver::Start()
         while (Active.load()) {
 
                 UpdateControls();        
+                auto detected_devices = OneWireManager.GetDevicesP();
+                if (detected_devices.empty()) {
+                    LOG(Info) << "Device list is emtpy";
+                    continue;
+                }
                 //read sensor data
                 names.clear();
                 values.clear();
-                for (const auto sensor : OneWireManager.GetDevicesP()) {
+                for (const auto sensor : detected_devices) {
+                    LOG(Info) << "Read " << sensor.GetDeviceName();
 
                     auto res = sensor.ReadTemperature();
                     if (res.IsDefined()) {
@@ -142,7 +148,7 @@ void UnorderedVectorDifference(const vector<T> &first, const vector<T>& second, 
     }
 }
 
-void TOneWireDriver::UpdateControls()
+void TOneWireDriver::UpdateDevicesAndControls()
 {
     LOG(Info) << "Start UpdateControls";
 

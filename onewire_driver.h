@@ -37,5 +37,5 @@ class TOneWireDriver
         std::atomic_bool                    Active;
         std::unique_ptr<std::thread>        Worker;
         void RescanBus();
-        void UpdateControls();
+        void UpdateDevicesAndControls();
 };
