@@ -27,16 +27,13 @@ namespace
             LOG(Warn) << "Unknown exception in " << place;
         }
     }
+    
 }
 
 TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : MqttDriver(mqttDriver), Active(false)
 {
-    // scan bus to detect devices 
-    LOG(Debug) << "Start rescan";
-    LOG(Debug) << "Finish rescan";
 
     try {
-
         auto tx = MqttDriver->BeginTx();
 
         DeviceP = tx->CreateDevice(TLocalDeviceArgs{}
@@ -89,7 +86,7 @@ void TOneWireDriver::Start()
 
         while (Active.load()) {
 
-                UpdateControls();        
+                UpdateDevicesAndControls();      
                 auto detected_devices = OneWireManager.GetDevicesP();
                 if (detected_devices.empty()) {
                     LOG(Info) << "Device list is emtpy";
@@ -109,16 +106,17 @@ void TOneWireDriver::Start()
                 }
 
                 if (!names.empty()) {
+
                     auto tx     = MqttDriver->BeginTx();
                     auto device = tx->GetDevice(Name);
 
                     for (unsigned int i = 0; i < names.size(); i++) {
-                    LOG(Info) << "Publish: " << names[i];
+                        LOG(Info) << "Publish: " << names[i];
                         device->GetControl(names[i])->SetValue(tx, static_cast<double>(values[i]));
                     }
 
                 } else {
-                    LOG(Info) << "Device list is emtpy";
+                    LOG(Info) << "Reading list is emtpy";
                 }
 
             }
@@ -150,15 +148,9 @@ void UnorderedVectorDifference(const vector<T> &first, const vector<T>& second, 
 
 void TOneWireDriver::UpdateDevicesAndControls()
 {
-    LOG(Info) << "Start UpdateControls";
-
     auto oldSensors = OneWireManager.GetDevicesP();
     OneWireManager.RescanBus();
     auto actualSensors = OneWireManager.GetDevicesP();
-    for (auto sensor : actualSensors) {
-        LOG(Info) << "Scanned sensor: " << sensor.GetDeviceId() << sensor.GetDeviceName();
-     }
-
 
     vector<TSysfsOnewireDevice> addSensors;
     UnorderedVectorDifference(actualSensors, oldSensors, addSensors);

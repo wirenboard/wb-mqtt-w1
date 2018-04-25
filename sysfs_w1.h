@@ -53,8 +53,6 @@ private:
     TOnewireFamilyType Family;
     string DeviceId;
     string DeviceDir;
-
-
 };
 
 
