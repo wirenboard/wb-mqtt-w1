@@ -35,7 +35,7 @@ TMaybeValue<double> TSysfsOnewireDevice::ReadTemperature() const
         /*  reading file till eof could lead to a stuck 
             when device is removed */
 
-        for (int lines_num; i < 2; i++) {
+        for (int lines_num; lines_num < 2; lines_num++) {
 
             getline(file, sLine);
             size_t tpos;
