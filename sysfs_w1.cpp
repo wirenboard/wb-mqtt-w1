@@ -32,7 +32,11 @@ TMaybeValue<double> TSysfsOnewireDevice::ReadTemperature() const
     file.open(fileName.c_str());
     if (file.is_open()) {
         std::string sLine;
-        while (!file.eof()) {
+        /*  reading file till eof could lead to a stuck 
+            when device is removed */
+
+        for (int lines_num; i < 2; i++) {
+
             getline(file, sLine);
             size_t tpos;
             if (sLine.find("crc=")!=std::string::npos) {
