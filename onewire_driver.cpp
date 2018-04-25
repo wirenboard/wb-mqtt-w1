@@ -49,16 +49,8 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : Mqtt
     }
 
 
-    EventHandlerHandle = mqttDriver->On<TControlOnValueEvent>([](const TControlOnValueEvent & event){
-        uint8_t value;
-        if (event.RawValue == "1") {
-            value = 1;
-        } else if (event.RawValue == "0") {
-            value = 0;
-        } else {
-            LOG(Warn) << "Invalid value: " << event.RawValue;
-            return;
-        }
+    EventHandlerHandle = mqttDriver->On<TSyncEvent>([](const TSyncEvent & event){
+        
     });
 }
 
