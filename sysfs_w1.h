@@ -3,6 +3,7 @@
 #include <map>
 #include <dirent.h>
 #include <wblib/utils.h>
+#include <sys/stat.h> 
 #include <fstream>
 #include <string>
 #include <iostream>
@@ -23,14 +24,9 @@ class TMaybeValue {
         bool isDefinedValue;
         T value;
     public:
-        TMaybeValue () {
-            isDefinedValue = false;
-        }
-        TMaybeValue (T v) {
-            isDefinedValue = true;
-            value = v;            
-        }
-
+        TMaybeValue () : isDefinedValue(false) { }
+        TMaybeValue (T v) : isDefinedValue(true), value(v) { }      
+        
         const bool IsDefined() {return isDefinedValue;}
         const T GetValue() {return value;}
 
