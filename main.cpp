@@ -24,12 +24,10 @@ const auto W1_DRIVER_STOP_TIMEOUT_S = chrono::seconds(5); // topic cleanup can t
 
 int main(int argc, char *argv[])
 {
-	int rc;
     WBMQTT::TMosquittoMqttConfig mqttConfig {};
     mqttConfig.Id = "wb-w1";
     WBMQTT::TPromise<void> initialized;
 
-    //TMQTTOnewireHandler::TConfig mqtt_config;
     int poll_interval = 10 * 1000; //milliseconds
 
     WBMQTT::SetThreadName("main");
@@ -76,7 +74,12 @@ int main(int argc, char *argv[])
             mqttConfig.Host = optarg;
             break;
         case 'i':
-			poll_interval = stoi(optarg) * 1000;
+			printf ("option i with value '%s'\n", optarg);
+            poll_interval = stoi(optarg) * 1000;
+            if (poll_interval <= 0) {
+                printf ("Invalid argument, poll intervall must be greater than zero\n");
+                return 1;
+            }
         case '?':
             break;
         default:
@@ -102,7 +105,7 @@ int main(int argc, char *argv[])
     mqttDriver->WaitForReady();
 
     try {
-        TOneWireDriver w1_driver(mqttDriver);
+        TOneWireDriver w1_driver(mqttDriver, poll_interval);
 
         w1_driver.Start();
 

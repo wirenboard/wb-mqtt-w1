@@ -30,8 +30,19 @@ namespace
     
 }
 
-TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : MqttDriver(mqttDriver), Active(false)
+
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) 
 {
+    TOneWireDriver (mqttDriver, DEFAULT_POLL_INTERVALL_MS);
+}
+
+
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_us) : MqttDriver(mqttDriver), poll_intervall_ms(p_intvall_us), Active(false)
+{
+
+    if (p_intvall_us <= 0) {
+        throw invalid_argument("polling intervall must be greater than zero");
+    }
 
     try {
         auto tx = MqttDriver->BeginTx();
@@ -78,6 +89,8 @@ void TOneWireDriver::Start()
 
         while (Active.load()) {
 
+                auto start_time = chrono::steady_clock::now();
+
                 UpdateDevicesAndControls();      
                 auto detected_devices = OneWireManager.GetDevicesP();
                 if (detected_devices.empty()) {
@@ -111,10 +124,12 @@ void TOneWireDriver::Start()
                     LOG(Info) << "Reading list is emtpy";
                 }
 
+                // Timing
+                auto finish_time = chrono::steady_clock::now();
+                chrono::duration<double> elapsed = finish_time - start_time;
+                this_thread::sleep_for(std::chrono::milliseconds(poll_intervall_ms -  (int)(elapsed.count() * 1000)));
             }
             LOG(Info) << "Stopped";
-
-
         }
     });
 
