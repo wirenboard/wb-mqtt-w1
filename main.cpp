@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
             mqttConfig.Host = optarg;
             break;
         case 'i':
-			printf ("option i with value '%s'\n", optarg);
+            printf ("option i with value '%s'\n", optarg);
             poll_interval = stoi(optarg) * 1000;
             if (poll_interval <= 0) {
                 printf ("Invalid argument, poll intervall must be greater than zero\n");
@@ -124,8 +124,6 @@ int main(int argc, char *argv[])
         LOG(Error) << "FATAL: " << e.what();
         return 1;
     }
-
-	//mosqpp::lib_cleanup();
 
 	return 0;
 }
