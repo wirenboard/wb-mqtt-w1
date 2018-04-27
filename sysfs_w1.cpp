@@ -10,15 +10,20 @@ bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & 
     return first.DeviceName == second.DeviceName;
 }
 
+/*  @brief  class constructor, it fills sensor data parameters
+ *  @param  device_name:    device name string what also determins the file descriptor of sensor
+ */
 
-TSysfsOnewireDevice::TSysfsOnewireDevice(const string& device_name)
-    : DeviceName(device_name)
+TSysfsOnewireDevice::TSysfsOnewireDevice(const string& device_name) : DeviceName(device_name)
 {
     //FIXME: fill family number
     Family = TOnewireFamilyType::ProgResThermometer;
-    DeviceId = DeviceName;
     DeviceDir = SysfsOnewireDevicesPath + DeviceName;
 }
+
+/*  @brief  reading temperature from device
+ *  @retval TMaybeValue object, if reading was not successful, TMaybeValue is not defined
+ */
 
 TMaybeValue<double> TSysfsOnewireDevice::ReadTemperature() const
 {
@@ -35,8 +40,8 @@ TMaybeValue<double> TSysfsOnewireDevice::ReadTemperature() const
         /*  reading file till eof could lead to a stuck 
             when device is removed */
 
-        for (int lines_num; lines_num < 2; lines_num++) {
 
+        for (int lines_num = 0; lines_num < 2; lines_num++) {
             getline(file, sLine);
             size_t tpos;
             if (sLine.find("crc=")!=std::string::npos) {
@@ -75,6 +80,9 @@ TMaybeValue<double> TSysfsOnewireDevice::ReadTemperature() const
     return NotDefinedMaybe;
 }
 
+/*  @brief  rescanning the available sensors on the bus and resfreshing "Devices" list
+ */
+
 void TSysfsOnewireManager::RescanBus()
 {
     vector<TSysfsOnewireDevice> current_channels;
@@ -101,6 +109,10 @@ void TSysfsOnewireManager::RescanBus()
 
     Devices.swap(current_channels);
 }
+
+/*  @brief  get function of "Devices" list
+ *  @retval Devices list reference
+ */
 
 const vector<TSysfsOnewireDevice>& TSysfsOnewireManager::GetDevicesP() const
 {

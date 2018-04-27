@@ -10,11 +10,10 @@ const char * const TOneWireDriver::Name = "wb-w1";
 
 namespace
 {
-    template <int N>
-    inline bool EndsWith(const string & str, const char(& with)[N])
-    {
-        return str.rfind(with) == str.size() - (N - 1);
-    }
+    /*  @brief  function's exception thrown inside SuppressExceptions is not propagated only printed as a warning message
+     *  @param  fn:     function pointer to execute
+     *  @param  place:  additinal text to warning message
+     */
 
     template <typename F>
     inline void SuppressExceptions(F && fn, const char * place)
@@ -27,20 +26,55 @@ namespace
             LOG(Warn) << "Unknown exception in " << place;
         }
     }
+
+    /*  @brief  Comparing two unordered vector and returns their difference
+     *  @param  first:  base vector reference
+     *  @param  second: secondary vector reference
+     *  @param  result: result vector reference
+     *  @note   first - second = result
+     */
+
+    template<typename T>
+    void UnorderedVectorDifference(const vector<T> &first, const vector<T>& second, vector<T> & result)
+    {
+        for (auto & el_first: first) {
+            bool found = false;
+            for (auto & el_second: second) {
+                if (el_first == el_second) {
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found) {
+                result.push_back(el_first);
+            }
+        }
+    }
     
 }
 
+/*  @brief  class constructor, uses delegated constructor
+ *  @param  mqttDriver: mqtt handler object, required for handling MQTT   
+ *  @note   If functions is called, default polling interval is used
+ */
 
 TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) 
 {
     TOneWireDriver (mqttDriver, DEFAULT_POLL_INTERVALL_MS);
 }
 
+/*  @brief  class constructor, it should be called at each object creation (other constructors should call it too)
+ *  @param  mqttDriver:     mqtt handler object, required for handling MQTT   
+ *  @param  p_intvall_ms:   polling intervall in microseconds
+ *  @note   mqtt device is creater here however control channels are not
+ */
 
-TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_us) : MqttDriver(mqttDriver), poll_intervall_ms(p_intvall_us), Active(false)
+
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms) : MqttDriver(mqttDriver), poll_intervall_ms(p_intvall_ms), Active(false)
 {
 
-    if (p_intvall_us <= 0) {
+    if (p_intvall_ms <= 0) {
         throw invalid_argument("polling intervall must be greater than zero");
     }
 
@@ -59,12 +93,13 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_
         throw;
     }
 
-
     EventHandlerHandle = mqttDriver->On<TSyncEvent>([](const TSyncEvent & event){
         
     });
 }
 
+/*  @brief class destructor function, clears all the MQTT devices and channels
+ */
 
 TOneWireDriver::~TOneWireDriver()
 {
@@ -73,6 +108,12 @@ TOneWireDriver::~TOneWireDriver()
     }
 }
 
+/*  @brief  Main operation function of  1W sensor driver. Scanning devices, updating mqtt channels, reading sensor values
+ *  @note   The main loop is time controlled by "poll_intervall_ms". The available sensor devices are scanned and if there is any new,
+ *          then a new MQTT channel is created, however any has disappeared, the channel is removed . 
+ *          All the available sensor devices are read and their value is written to the corresponding mqtt channel. 
+ *  @throws "TW1SensorDriverException" if the worker thread has been started already
+ */
 
 void TOneWireDriver::Start() 
 {
@@ -91,13 +132,14 @@ void TOneWireDriver::Start()
 
                 auto start_time = chrono::steady_clock::now();
 
+                // update available sensor list, and mqtt control channels
                 UpdateDevicesAndControls();      
                 auto detected_devices = OneWireManager.GetDevicesP();
                 if (detected_devices.empty()) {
                     LOG(Info) << "Device list is emtpy";
                     continue;
                 }
-                //read sensor data
+                // read sensor data
                 names.clear();
                 values.clear();
                 for (const auto sensor : detected_devices) {
@@ -111,7 +153,7 @@ void TOneWireDriver::Start()
                 }
 
                 if (!names.empty()) {
-
+                    // write sensor data to mqtt channels
                     auto tx     = MqttDriver->BeginTx();
                     auto device = tx->GetDevice(Name);
 
@@ -124,10 +166,12 @@ void TOneWireDriver::Start()
                     LOG(Info) << "Reading list is emtpy";
                 }
 
-                // Timing
+                // timing
                 auto finish_time = chrono::steady_clock::now();
                 chrono::duration<double> elapsed = finish_time - start_time;
-                this_thread::sleep_for(std::chrono::milliseconds(poll_intervall_ms -  (int)(elapsed.count() * 1000)));
+                if ( (int)(elapsed.count() * 1000) < poll_intervall_ms) {
+                    this_thread::sleep_for(std::chrono::milliseconds(poll_intervall_ms -  (int)(elapsed.count() * 1000)));
+                }
             }
             LOG(Info) << "Stopped";
         }
@@ -135,23 +179,9 @@ void TOneWireDriver::Start()
 
 }
 
-template<typename T>
-void UnorderedVectorDifference(const vector<T> &first, const vector<T>& second, vector<T> & result)
-{
-    for (auto & el_first: first) {
-        bool found = false;
-        for (auto & el_second: second) {
-            if (el_first == el_second) {
-                found = true;
-                break;
-            }
-        }
-
-        if (!found) {
-            result.push_back(el_first);
-        }
-    }
-}
+/*  @brief  re-scanning available sensor devices and compare it with registered devices. If there is any new, it creates new channel, if any has 
+ *          been removed, it removes channel
+ */
 
 void TOneWireDriver::UpdateDevicesAndControls()
 {
@@ -169,9 +199,8 @@ void TOneWireDriver::UpdateDevicesAndControls()
     auto futureControl = TPromise<PControl>::GetValueFuture(nullptr);
 
     for (const auto sensor : addSensors) {
-        LOG(Info) << "CreateControl for: " << sensor.GetDeviceId() << sensor.GetDeviceName();
+        LOG(Info) << "CreateControl for: " << sensor.GetDeviceName();
         
-
         futureControl = DeviceP->CreateControl(tx, TControlArgs{}
             .SetId(sensor.GetDeviceName())
             .SetType("temperature")
@@ -182,10 +211,14 @@ void TOneWireDriver::UpdateDevicesAndControls()
     futureControl.Wait();   // wait for last control
 
     for (const auto sensor : removeSensors) {
-        LOG(Info) << "RemoveControl for: " << sensor.GetDeviceId() << sensor.GetDeviceName();
+        LOG(Info) << "RemoveControl of: " << sensor.GetDeviceName();
         DeviceP->RemoveControl (tx, sensor.GetDeviceName());    
     }
 }
+
+/*  @brief  Stop "working" thread (Start function content). It will stop sensor reading and channel refreshing
+ *  @throws "TW1SensorDriverException" if there is no such thread
+ */
 
 void TOneWireDriver::Stop()
 {
@@ -202,6 +235,9 @@ void TOneWireDriver::Stop()
 
     Worker.reset();
 }
+
+/*  @brief cleaning up all the generated channels
+ */
 
 void TOneWireDriver::Clear() noexcept
 {

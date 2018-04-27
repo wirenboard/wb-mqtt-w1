@@ -39,7 +39,6 @@ public:
     TSysfsOnewireDevice(const string& device_name);
 
     inline TOnewireFamilyType GetDeviceFamily() const {return Family;};
-    inline const string & GetDeviceId() const {return DeviceId;};
     inline const string & GetDeviceName() const {return DeviceName;};
     TMaybeValue<double> ReadTemperature() const;
 
@@ -47,7 +46,6 @@ public:
 private:
     string DeviceName;
     TOnewireFamilyType Family;
-    string DeviceId;
     string DeviceDir;
 };
 
@@ -62,9 +60,6 @@ public:
     const vector<TSysfsOnewireDevice>& GetDevicesP() const;
     void ClearDevices(){ Devices.clear();}
 private:
-    // FIXME: once found, device will be kept indefinetely
-    // consider some kind of ref-counting smart vectors instead
-
     vector<TSysfsOnewireDevice> Devices;
 
 };
