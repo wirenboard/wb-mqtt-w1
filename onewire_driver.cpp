@@ -59,9 +59,9 @@ namespace
  *  @note   If functions is called, default polling interval is used
  */
 
-TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) 
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : TOneWireDriver (mqttDriver, DEFAULT_POLL_INTERVALL_MS)
 {
-    TOneWireDriver (mqttDriver, DEFAULT_POLL_INTERVALL_MS);
+
 }
 
 /*  @brief  class constructor, it should be called at each object creation (other constructors should call it too)
@@ -167,10 +167,10 @@ void TOneWireDriver::Start()
                 }
 
                 // timing
-                auto finish_time = chrono::steady_clock::now();
-                chrono::duration<double> elapsed = finish_time - start_time;
-                if ( (int)(elapsed.count() * 1000) < poll_intervall_ms) {
-                    this_thread::sleep_for(std::chrono::milliseconds(poll_intervall_ms -  (int)(elapsed.count() * 1000)));
+                auto elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_time);
+                
+                if (elapsed < poll_intervall_ms) {
+                    this_thread::sleep_for(poll_intervall_ms - elapsed);
                 }
             }
             LOG(Info) << "Stopped";
