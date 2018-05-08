@@ -92,10 +92,6 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_
         LOG(Error) << "Unable to create W1 driver: " << e.what();
         throw;
     }
-
-    EventHandlerHandle = mqttDriver->On<TSyncEvent>([](const TSyncEvent & event){
-        
-    });
 }
 
 /*  @brief class destructor function, clears all the MQTT devices and channels
@@ -103,7 +99,6 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_
 
 TOneWireDriver::~TOneWireDriver()
 {
-    if (EventHandlerHandle) {
         Clear();
     }
 }
@@ -247,10 +242,6 @@ void TOneWireDriver::Clear() noexcept
     }
 
     LOG(Info) << "Cleaning...";
-
-    SuppressExceptions([this]{
-        MqttDriver->RemoveEventHandler(EventHandlerHandle);
-    }, "TOneWireDriver::Clear()");
 
     SuppressExceptions([this]{
         MqttDriver->BeginTx()->RemoveDeviceById(Name).Sync();
