@@ -201,7 +201,7 @@ void TOneWireDriver::UpdateDevicesAndControls()
         futureControl = DeviceP->CreateControl(tx, TControlArgs{}
             .SetId(sensor.GetDeviceName())
             .SetType("temperature")
-            .SetReadonly( 0)
+            .SetReadonly(true)
         );     
     }
 
