@@ -38,6 +38,7 @@ class TOneWireDriver
 
         TSysfsOnewireManager                OneWireManager;
         std::atomic_bool                    Active;
+        std::atomic_bool                    Cleaned;
         std::unique_ptr<std::thread>        Worker;
         chrono::milliseconds                poll_intervall_ms;
 

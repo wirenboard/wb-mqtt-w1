@@ -99,6 +99,7 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_
 
 TOneWireDriver::~TOneWireDriver()
 {
+    if(!Cleaned.load()) {
         Clear();
     }
 }
@@ -117,6 +118,7 @@ void TOneWireDriver::Start()
     }
 
     Active.store(true);
+    Cleaned.store(false);
     Worker = WBMQTT::MakeThread("W1 worker", {[this]{
         LOG(Info) << "Started";
 
@@ -253,5 +255,6 @@ void TOneWireDriver::Clear() noexcept
 
     EventHandlerHandle = nullptr;
 
+    Cleaned.store(true);
     LOG(Info) << "Cleaned";
 }
