@@ -41,14 +41,14 @@ int main(int argc, char *argv[])
         else if timed out: exit with error
     */
     WBMQTT::SignalHandling::SetWaitFor(W1_DRIVER_INIT_TIMEOUT_S, initialized.GetFuture(), [&]{
-        //LOG(Error) << "Driver takes too long to initialize. Exiting.";
+        LOG(Error) << "Driver takes too long to initialize. Exiting.";
         cerr << "Error: W1_DRIVER_INIT_TIMEOUT_S" << endl;
         exit(1); 
     });
 
     /* if handling of signal takes too much time: exit with error */
     WBMQTT::SignalHandling::SetOnTimeout(W1_DRIVER_STOP_TIMEOUT_S, [&]{
-        //LOG(Error) << "Driver takes too long to stop. Exiting.";
+        LOG(Error) << "Driver takes too long to stop. Exiting.";
         cerr << "Error: W1_DRIVER_STOP_TIMEOUT_S" << endl;
         exit(2);
     });
@@ -86,8 +86,7 @@ int main(int argc, char *argv[])
             printf ("?? getopt returned character code 0%o ??\n", c);
         }
     }
-    WBMQTT::Debug.SetEnabled(true);
-
+    
     auto mqttDriver = WBMQTT::NewDriver(WBMQTT::TDriverArgs{}
         .SetBackend(WBMQTT::NewDriverBackend(WBMQTT::NewMosquittoMqttClient(mqttConfig)))
         .SetId(mqttConfig.Id)
