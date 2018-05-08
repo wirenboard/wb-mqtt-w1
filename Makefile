@@ -54,5 +54,6 @@ install: all
 	install -d $(DESTDIR)/etc
 	install -d $(DESTDIR)/usr/bin
 	install -d $(DESTDIR)/usr/lib
+	install -d $(DESTDIR)/var/lib/wb-homa-w1
 
 	install -m 0755  $(W1_BIN) $(DESTDIR)/usr/bin/$(W1_BIN)
