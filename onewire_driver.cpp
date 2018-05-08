@@ -164,11 +164,12 @@ void TOneWireDriver::Start()
                 }
 
                 // timing
-                auto elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_time);
-                
-                if (elapsed < poll_intervall_ms) {
-                    this_thread::sleep_for(poll_intervall_ms - elapsed);
-                }
+                chrono::milliseconds elapsed;
+                do {
+                    this_thread::sleep_for(chrono::seconds(1));
+                    elapsed = chrono::duration_cast<chrono::milliseconds>(chrono::steady_clock::now() - start_time);
+
+                } while (Active.load() && (elapsed < poll_intervall_ms ));
             }
             LOG(Info) << "Stopped";
         }
