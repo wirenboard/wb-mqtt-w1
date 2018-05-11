@@ -7,7 +7,7 @@ using namespace WBMQTT;
 
 bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & second)
 {
-    return first.DeviceName == second.DeviceName;
+    return (first.DeviceName == second.DeviceName) && (first.Family == second.Family);
 }
 
 /*  @brief  class constructor, it fills sensor data parameters
@@ -16,8 +16,6 @@ bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & 
 
 TSysfsOnewireDevice::TSysfsOnewireDevice(const string& device_name, const string& dir) : DeviceName(device_name), Family(TOnewireFamilyType::ProgResThermometer)
 {
-    //FIXME: fill family number
-    Family = TOnewireFamilyType::ProgResThermometer;
     DeviceDir = dir + DeviceName;
 }
 
