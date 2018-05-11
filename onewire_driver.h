@@ -24,7 +24,8 @@ class TOneWireDriver
         static const char * const Name;
 
         TOneWireDriver(const WBMQTT::PDeviceDriver & mqttDriver);
-        TOneWireDriver(const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_us);
+        TOneWireDriver(const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms);
+        TOneWireDriver(const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_us, const string& dir);
         ~TOneWireDriver();
 
         void Start();

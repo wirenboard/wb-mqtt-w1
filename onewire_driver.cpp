@@ -59,7 +59,7 @@ namespace
  *  @note   If functions is called, default polling interval is used
  */
 
-TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : TOneWireDriver (mqttDriver, DEFAULT_POLL_INTERVALL_MS)
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : TOneWireDriver (mqttDriver, DEFAULT_POLL_INTERVALL_MS, string(SysfsOnewireDevicesPath))
 {
 
 }
@@ -70,8 +70,20 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : TOne
  *  @note   mqtt device is creater here however control channels are not
  */
 
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms) : TOneWireDriver (mqttDriver, p_intvall_ms, string(SysfsOnewireDevicesPath))
+{
 
-TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms) : MqttDriver(mqttDriver), poll_intervall_ms(p_intvall_ms), Active(false)
+}
+
+/*  @brief  class constructor, it should be called at each object creation (other constructors should call it too)
+ *  @param  mqttDriver:     mqtt handler object, required for handling MQTT   
+ *  @param  p_intvall_ms:   polling intervall in microseconds
+ *  @param  dir:            sensor directory
+ *  @note   mqtt device is creater here however control channels are not
+ */
+
+
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms, const string& dir) : MqttDriver(mqttDriver), poll_intervall_ms(p_intvall_ms), Active(false), OneWireManager(dir)
 {
 
     if (p_intvall_ms <= 0) {

@@ -14,11 +14,11 @@ bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & 
  *  @param  device_name:    device name string what also determins the file descriptor of sensor
  */
 
-TSysfsOnewireDevice::TSysfsOnewireDevice(const string& device_name) : DeviceName(device_name)
+TSysfsOnewireDevice::TSysfsOnewireDevice(const string& device_name, const string& dir) : DeviceName(device_name), Family(TOnewireFamilyType::ProgResThermometer)
 {
     //FIXME: fill family number
     Family = TOnewireFamilyType::ProgResThermometer;
-    DeviceDir = SysfsOnewireDevicesPath + DeviceName;
+    DeviceDir = dir + DeviceName;
 }
 
 /*  @brief  reading temperature from device
@@ -90,21 +90,20 @@ void TSysfsOnewireManager::RescanBus()
     DIR *dir;
     struct dirent *ent;
     string entry_name;
-    if ((dir = opendir (SysfsOnewireDevicesPath.c_str())) != NULL) {
         /* print all the files and directories within directory */
+    if ((dir = opendir (devices_dir.c_str())) != NULL) {
         while ((ent = readdir (dir)) != NULL) {
-            printf ("%s\n", ent->d_name);
             entry_name = ent->d_name;
             if (StringStartsWith(entry_name, "28-") ||
                 StringStartsWith(entry_name, "10-") ||
                 StringStartsWith(entry_name, "22-") )
             {
-                    current_channels.emplace_back(entry_name);
+                    current_channels.emplace_back(entry_name, devices_dir);
             }
         }
         closedir (dir);
     } else {
-        cerr << "ERROR: could not open directory " << SysfsOnewireDevicesPath << endl;
+        cerr << "ERROR: could not open directory " << devices_dir << endl;
     }
 
     Devices.swap(current_channels);
