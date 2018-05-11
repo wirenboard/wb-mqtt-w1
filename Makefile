@@ -16,15 +16,7 @@ ifneq ($(CC_PATH),)
 	CC=$(CROSS_COMPILE)gcc-4.7
 endif
 
-#CFLAGS=-Wall -ggdb -std=c++0x -O0 -I.
 CFLAGS=-Wall -std=c++0x -Os -I.
-LDFLAGS= -lmosquittopp -lmosquitto -ljsoncpp -lwbmqtt1 -lpthread
-
-W1_BIN=wb-homa-w1
-
-# W1
-W1_H=sysfs_w1.h
-W1_D=onewire_driver.h
 
 W1_SOURCES= 					\
 			sysfs_w1.cpp		\
@@ -33,6 +25,18 @@ W1_SOURCES= 					\
 			log.cpp				\
 
 W1_OBJECTS=$(W1_SOURCES:.cpp=.o)
+W1_BIN=wb-homa-w1
+W1_LIBS= -lmosquittopp -lmosquitto -ljsoncpp -lwbmqtt1 -lpthread
+
+W1_TEST_SOURCES= 							\
+			$(TEST_DIR)/test_main.cpp		\
+			$(TEST_DIR)/sysfs_w1_test.cpp	\
+			$(TEST_DIR)/testlog.cpp		\
+			
+TEST_DIR=test
+W1_TEST_OBJECTS=$(W1_TEST_SOURCES:.cpp=.o)
+TEST_BIN=wb-homa-w1-test
+TEST_LIBS=-lgtest 
 
 all : $(W1_BIN)
 
@@ -41,12 +45,17 @@ all : $(W1_BIN)
 	${CXX} -c $< -o $@ ${CFLAGS}
 
 $(W1_BIN) : main.o $(W1_OBJECTS)
-	${CXX} $^ ${LDFLAGS} -o $@
+	${CXX} $^ ${W1_LIBS} -o $@
 
+$(TEST_DIR)/$(TEST_BIN): $(W1_OBJECTS) $(W1_TEST_OBJECTS)
+	${CXX} $^ $(W1_LIBS) $(TEST_LIBS) -o $@
+
+test: $(TEST_DIR)/$(TEST_BIN)
+	rm -f $(TEST_DIR)/*.dat.out
 
 clean :
 	-rm -f *.o $(W1_BIN)
-
+	-rm -f $(TEST_DIR)/*.o $(TEST_DIR)/$(TEST_BIN)
 
 
 install: all
