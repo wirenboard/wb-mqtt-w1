@@ -54,6 +54,9 @@ class TSysfsOnewireManager
 {
 public:
     TSysfsOnewireManager()  {};
+    ~TSysfsOnewireManager() {
+        Devices.clear();
+    }
 
     void RescanBus();
 
