@@ -67,6 +67,27 @@ TEST_F(TSysfsOnewireDeviceTest, operator_false)
     EXPECT_EQ( (s1 == s2), false );
 }
 
+TEST_F(TSysfsOnewireDeviceTest, 1_sensor_read)
+{
+    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013d97", "./fake_sensors/1_sensor/");
+    auto v = s1.ReadTemperature();
+    EXPECT_EQ(to_string(v.GetValue()), "26.312000");
+}
+
+TEST_F(TSysfsOnewireDeviceTest, no_sensor_read)
+{
+    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013d97", "./fake_sensors/no_sensor/");
+    auto v = s1.ReadTemperature();
+    EXPECT_EQ(v.IsDefined(), false);
+}
+
+TEST_F(TSysfsOnewireDeviceTest, wrong_crc)
+{
+    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013000-wrong-crc", "./fake_sensors/2_sensor/");
+    auto v = s1.ReadTemperature();
+    EXPECT_EQ(v.IsDefined(), false);
+}
+
 //////// SysfsOnewireManager test
 
 class TSysfsOnewireManagerTest: public TLoggedFixture
