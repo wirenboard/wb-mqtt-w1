@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
-#include "testlog.h"
+#include <wblib/testing/testlog.h>
 #include "sysfs_w1.h"
 
 using namespace std;
+using namespace WBMQTT;
+using namespace WBMQTT::Testing;
 
     #undef SysfsOnewireDevicesPath
     #define SysfsOnewireDevicesPath string("./fake_sensors/no_sensor/")
@@ -10,8 +12,12 @@ using namespace std;
 class TMaybeValueTest: public TLoggedFixture
 {
     protected:
-        void SetUp() {};
-        void TearDown() {};
+        void SetUp() {
+            TLoggedFixture::SetUp();
+        };
+        void TearDown() {
+            TLoggedFixture::TearDown();
+        };
 };
 
 TEST_F(TMaybeValueTest, false_object_1)
@@ -93,8 +99,12 @@ TEST_F(TSysfsOnewireDeviceTest, wrong_crc)
 class TSysfsOnewireManagerTest: public TLoggedFixture
 {
     protected:
-        void SetUp() {};
-        void TearDown() {};
+        void SetUp() {
+            TLoggedFixture::SetUp();
+        };
+        void TearDown() {
+            TLoggedFixture::TearDown();
+         };
 };
 
 TEST_F(TSysfsOnewireManagerTest, no_sensor)
