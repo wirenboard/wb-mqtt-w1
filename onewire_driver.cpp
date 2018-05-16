@@ -83,7 +83,7 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_
  */
 
 
-TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms, const string& dir) : MqttDriver(mqttDriver), poll_intervall_ms(p_intvall_ms), Active(false), OneWireManager(dir)
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms, const string& dir) : MqttDriver(mqttDriver), OneWireManager(dir), Active(false), poll_intervall_ms(p_intvall_ms)
 {
 
     if (p_intvall_ms <= 0) {
