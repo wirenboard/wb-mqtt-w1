@@ -31,12 +31,12 @@ W1_LIBS= -lmosquittopp -lmosquitto -ljsoncpp -lwbmqtt1 -lpthread
 W1_TEST_SOURCES= 							\
 			$(TEST_DIR)/test_main.cpp		\
 			$(TEST_DIR)/sysfs_w1_test.cpp	\
-			$(TEST_DIR)/testlog.cpp		\
+    		$(TEST_DIR)/onewire_driver_test.cpp	\
 			
 TEST_DIR=test
 W1_TEST_OBJECTS=$(W1_TEST_SOURCES:.cpp=.o)
 TEST_BIN=wb-homa-w1-test
-TEST_LIBS=-lgtest 
+TEST_LIBS=-lgtest -lwbmqtt_test_utils
 
 all : $(W1_BIN)
 
