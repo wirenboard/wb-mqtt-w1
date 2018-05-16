@@ -12,6 +12,7 @@ using namespace WBMQTT;
 using namespace WBMQTT::Testing;
 
 #define LOG(logger) ::logger.Log() << "[onewire driver test] "
+string test_sensor_dir = string(getenv("TEST_DIR_ABS")) + string("/fake_sensors/1_sensor/");
 
 class TOnewireDriverTest: public TLoggedFixture
 {
@@ -31,7 +32,7 @@ const char * const TOnewireDriverTest::Name = "onewire-driver-test";
 
 void TOnewireDriverTest::SetUp()
 {
-    SetMode(E_Normal);
+    SetMode(E_Unordered);
     TLoggedFixture::SetUp();
 
     MqttBroker = NewFakeMqttBroker(*this);
@@ -57,7 +58,7 @@ void TOnewireDriverTest::TearDown()
 
 TEST_F(TOnewireDriverTest, create_and_read)
 {
-    TOneWireDriver w1_driver(Driver, 10, "./fake_sensors/1_sensor/");
+    TOneWireDriver w1_driver(Driver, 10, test_sensor_dir);
     w1_driver.UpdateDevicesAndControls();
     w1_driver.UpdateSensorValues();
     Emit() << "Clear()";
@@ -66,15 +67,15 @@ TEST_F(TOnewireDriverTest, create_and_read)
 
 TEST_F(TOnewireDriverTest, move_and_read)
 {
-    TOneWireDriver w1_driver(Driver, 10, "./fake_sensors/1_sensor/");
+    TOneWireDriver w1_driver(Driver, 10, test_sensor_dir);
     w1_driver.UpdateDevicesAndControls();
     w1_driver.UpdateSensorValues();
     Emit() << "Moving sensor to tmp";
-    rename("./fake_sensors/1_sensor/28-00000a013d97", "./fake_sensors/1_sensor/tmp-28-00000a013d97");
+    rename( (test_sensor_dir + string("28-00000a013d97")).c_str(), (test_sensor_dir + string("tmp-28-00000a013d97")).c_str() );
     w1_driver.UpdateDevicesAndControls();
     w1_driver.UpdateSensorValues();
     Emit() << "Moving sensor back";
-    rename("./fake_sensors/1_sensor/tmp-28-00000a013d97", "./fake_sensors/1_sensor/28-00000a013d97");
+    rename( (test_sensor_dir + string("tmp-28-00000a013d97")).c_str(), (test_sensor_dir + string("28-00000a013d97")).c_str() );
     w1_driver.UpdateDevicesAndControls();
     w1_driver.UpdateSensorValues();
     Emit() << "Clear()";

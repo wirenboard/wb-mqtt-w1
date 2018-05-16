@@ -6,8 +6,7 @@ using namespace std;
 using namespace WBMQTT;
 using namespace WBMQTT::Testing;
 
-    #undef SysfsOnewireDevicesPath
-    #define SysfsOnewireDevicesPath string("./fake_sensors/no_sensor/")
+string test_sensor_root_dir = string(getenv("TEST_DIR_ABS")) + string("/fake_sensors/");
 
 class TMaybeValueTest: public TLoggedFixture
 {
@@ -75,21 +74,21 @@ TEST_F(TSysfsOnewireDeviceTest, operator_false)
 
 TEST_F(TSysfsOnewireDeviceTest, 1_sensor_read)
 {
-    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013d97", "./fake_sensors/1_sensor/");
+    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013d97", test_sensor_root_dir + string("1_sensor/"));
     auto v = s1.ReadTemperature();
     EXPECT_EQ(to_string(v.GetValue()), "26.312000");
 }
 
 TEST_F(TSysfsOnewireDeviceTest, no_sensor_read)
 {
-    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013d97", "./fake_sensors/no_sensor/");
+    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013d97", test_sensor_root_dir + string("no_sensor/"));
     auto v = s1.ReadTemperature();
     EXPECT_EQ(v.IsDefined(), false);
 }
 
 TEST_F(TSysfsOnewireDeviceTest, wrong_crc)
 {
-    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013000-wrong-crc", "./fake_sensors/2_sensor/");
+    TSysfsOnewireDevice s1 = TSysfsOnewireDevice("28-00000a013000-wrong-crc", test_sensor_root_dir + string("2_sensor/"));
     auto v = s1.ReadTemperature();
     EXPECT_EQ(v.IsDefined(), false);
 }
@@ -109,21 +108,21 @@ class TSysfsOnewireManagerTest: public TLoggedFixture
 
 TEST_F(TSysfsOnewireManagerTest, no_sensor)
 { 
-    TSysfsOnewireManager manager = TSysfsOnewireManager("./fake_sensors/no_sensor/");
+    TSysfsOnewireManager manager = TSysfsOnewireManager(test_sensor_root_dir + string("no_sensor"));
     manager.RescanBus();
     EXPECT_EQ(manager.GetDevicesP().size(), 0);
 } 
 
 TEST_F(TSysfsOnewireManagerTest, 1_sensor)
 { 
-    TSysfsOnewireManager manager = TSysfsOnewireManager("./fake_sensors/1_sensor/");
+    TSysfsOnewireManager manager = TSysfsOnewireManager(test_sensor_root_dir + string("1_sensor"));
     manager.RescanBus();
     EXPECT_EQ(manager.GetDevicesP().size(), 1);
 } 
 
 TEST_F(TSysfsOnewireManagerTest, 2_sensor)
 { 
-    TSysfsOnewireManager manager = TSysfsOnewireManager("./fake_sensors/2_sensor/");
+    TSysfsOnewireManager manager = TSysfsOnewireManager(test_sensor_root_dir + string("2_sensor"));
     manager.RescanBus();
     EXPECT_EQ(manager.GetDevicesP().size(), 2);
 } 
