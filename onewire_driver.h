@@ -31,6 +31,9 @@ class TOneWireDriver
         void Start();
         void Stop();
         void Clear() noexcept;
+        void UpdateDevicesAndControls();
+        void UpdateSensorValues();
+
 
     private:
         WBMQTT::PDeviceDriver              MqttDriver;
@@ -44,5 +47,4 @@ class TOneWireDriver
         chrono::milliseconds                poll_intervall_ms;
 
         void RescanBus();
-        void UpdateDevicesAndControls();
 };
