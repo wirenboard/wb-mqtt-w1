@@ -24,12 +24,16 @@ class TOneWireDriver
         static const char * const Name;
 
         TOneWireDriver(const WBMQTT::PDeviceDriver & mqttDriver);
-        TOneWireDriver(const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_us);
+        TOneWireDriver(const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms);
+        TOneWireDriver(const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_us, const string& dir);
         ~TOneWireDriver();
 
         void Start();
         void Stop();
         void Clear() noexcept;
+        void UpdateDevicesAndControls();
+        void UpdateSensorValues();
+
 
     private:
         WBMQTT::PDeviceDriver              MqttDriver;
@@ -43,5 +47,4 @@ class TOneWireDriver
         chrono::milliseconds                poll_intervall_ms;
 
         void RescanBus();
-        void UpdateDevicesAndControls();
 };

@@ -11,7 +11,7 @@
 #include "log.h"
 using namespace std;
 
-const string SysfsOnewireDevicesPath = "/sys/bus/w1/devices/";
+#define SysfsOnewireDevicesPath     "/sys/bus/w1/devices/"
 
 enum class TOnewireFamilyType
 {
@@ -36,7 +36,7 @@ class TMaybeValue {
 class TSysfsOnewireDevice
 {
 public:
-    TSysfsOnewireDevice(const string& device_name);
+    TSysfsOnewireDevice(const string& device_name, const string& dir);
 
     inline TOnewireFamilyType GetDeviceFamily() const {return Family;};
     inline const string & GetDeviceName() const {return DeviceName;};
@@ -53,13 +53,17 @@ private:
 class TSysfsOnewireManager
 {
 public:
-    TSysfsOnewireManager()  {};
+    TSysfsOnewireManager(const string& path) : devices_dir(path)  {};
+    ~TSysfsOnewireManager() {
+        Devices.clear();
+    }
 
     void RescanBus();
 
     const vector<TSysfsOnewireDevice>& GetDevicesP() const;
     void ClearDevices(){ Devices.clear();}
 private:
+    const string devices_dir;
     vector<TSysfsOnewireDevice> Devices;
 
 };

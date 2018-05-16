@@ -59,7 +59,7 @@ namespace
  *  @note   If functions is called, default polling interval is used
  */
 
-TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : TOneWireDriver (mqttDriver, DEFAULT_POLL_INTERVALL_MS)
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : TOneWireDriver (mqttDriver, DEFAULT_POLL_INTERVALL_MS, string(SysfsOnewireDevicesPath))
 {
 
 }
@@ -70,8 +70,20 @@ TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver) : TOne
  *  @note   mqtt device is creater here however control channels are not
  */
 
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms) : TOneWireDriver (mqttDriver, p_intvall_ms, string(SysfsOnewireDevicesPath))
+{
 
-TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms) : MqttDriver(mqttDriver), poll_intervall_ms(p_intvall_ms), Active(false)
+}
+
+/*  @brief  class constructor, it should be called at each object creation (other constructors should call it too)
+ *  @param  mqttDriver:     mqtt handler object, required for handling MQTT   
+ *  @param  p_intvall_ms:   polling intervall in microseconds
+ *  @param  dir:            sensor directory
+ *  @note   mqtt device is creater here however control channels are not
+ */
+
+
+TOneWireDriver::TOneWireDriver (const WBMQTT::PDeviceDriver & mqttDriver, int p_intvall_ms, const string& dir) : MqttDriver(mqttDriver), OneWireManager(dir), Active(false), poll_intervall_ms(p_intvall_ms)
 {
 
     if (p_intvall_ms <= 0) {
@@ -122,46 +134,15 @@ void TOneWireDriver::Start()
     Worker = WBMQTT::MakeThread("W1 worker", {[this]{
         LOG(Info) << "Started";
 
-        vector<string> names;
-        vector<double> values;
-
         while (Active.load()) {
 
                 auto start_time = chrono::steady_clock::now();
 
                 // update available sensor list, and mqtt control channels
                 UpdateDevicesAndControls();      
-                auto detected_devices = OneWireManager.GetDevicesP();
-                if (detected_devices.empty()) {
-                    LOG(Info) << "Device list is emtpy";
-                    continue;
-                }
-                // read sensor data
-                names.clear();
-                values.clear();
-                for (const auto sensor : detected_devices) {
-                    LOG(Info) << "Read " << sensor.GetDeviceName();
 
-                    auto res = sensor.ReadTemperature();
-                    if (res.IsDefined()) {
-                        names.push_back(sensor.GetDeviceName());
-                        values.push_back(res.GetValue());
-                    }
-                }
-
-                if (!names.empty()) {
-                    // write sensor data to mqtt channels
-                    auto tx     = MqttDriver->BeginTx();
-                    auto device = tx->GetDevice(Name);
-
-                    for (unsigned int i = 0; i < names.size(); i++) {
-                        LOG(Info) << "Publish: " << names[i];
-                        device->GetControl(names[i])->SetValue(tx, static_cast<double>(values[i]));
-                    }
-
-                } else {
-                    LOG(Info) << "Reading list is emtpy";
-                }
+                // read available sensors and publish sensor values
+                UpdateSensorValues();
 
                 // timing
                 chrono::milliseconds elapsed;
@@ -176,6 +157,49 @@ void TOneWireDriver::Start()
     });
 
 }
+
+/*  @brief  reading available sensors and publishing 
+ *  @note   available sensors must be updated in advanced by "UpdateDevicesAndControls"
+ */
+
+void TOneWireDriver::UpdateSensorValues()
+{ 
+    vector<string> names;
+    vector<double> values;
+
+    auto detected_devices = OneWireManager.GetDevicesP();
+    if (detected_devices.empty()) {
+        LOG(Info) << "Device list is emtpy";
+        return;
+    }
+    // read sensor data
+    names.clear();
+    values.clear();
+    for (const auto sensor : detected_devices) {
+        LOG(Info) << "Read " << sensor.GetDeviceName();
+
+        auto res = sensor.ReadTemperature();
+        if (res.IsDefined()) {
+            names.push_back(sensor.GetDeviceName());
+            values.push_back(res.GetValue());
+        }
+    }
+
+    if (!names.empty()) {
+        // write sensor data to mqtt channels
+        auto tx     = MqttDriver->BeginTx();
+        auto device = tx->GetDevice(Name);
+
+        for (unsigned int i = 0; i < names.size(); i++) {
+            LOG(Info) << "Publish: " << names[i];
+            device->GetControl(names[i])->SetValue(tx, static_cast<double>(values[i]));
+        }
+
+    } else {
+        LOG(Info) << "Reading list is emtpy";
+    }
+}
+
 
 /*  @brief  re-scanning available sensor devices and compare it with registered devices. If there is any new, it creates new channel, if any has 
  *          been removed, it removes channel
