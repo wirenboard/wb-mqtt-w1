@@ -31,7 +31,7 @@ const char * const TOnewireDriverTest::Name = "onewire-driver-test";
 
 void TOnewireDriverTest::SetUp()
 {
-    SetMode(E_Unordered);
+    SetMode(E_Normal);
     TLoggedFixture::SetUp();
 
     MqttBroker = NewFakeMqttBroker(*this);
@@ -69,10 +69,15 @@ TEST_F(TOnewireDriverTest, move_and_read)
     TOneWireDriver w1_driver(Driver, 10, "./fake_sensors/1_sensor/");
     w1_driver.UpdateDevicesAndControls();
     w1_driver.UpdateSensorValues();
-    Emit() << "Moving sensor";
-    rename(".fake_sensors/1_sensor/28-00000a013d97", ".fake_sensors/1_sensor/tmp-28-00000a013d97");
+    Emit() << "Moving sensor to tmp";
+    rename("./fake_sensors/1_sensor/28-00000a013d97", "./fake_sensors/1_sensor/tmp-28-00000a013d97");
+    w1_driver.UpdateDevicesAndControls();
+    w1_driver.UpdateSensorValues();
+    Emit() << "Moving sensor back";
+    rename("./fake_sensors/1_sensor/tmp-28-00000a013d97", "./fake_sensors/1_sensor/28-00000a013d97");
     w1_driver.UpdateDevicesAndControls();
     w1_driver.UpdateSensorValues();
     Emit() << "Clear()";
     w1_driver.Clear();
+
 }
