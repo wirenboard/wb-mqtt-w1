@@ -31,7 +31,7 @@ TMaybe<float> TSysfsOnewireDevice::ReadTemperature() const
     file.open(fileName.c_str());
     if (file.is_open()) {
         std::string sLine;
-        while (!file.eof()) {
+        while (file.good()) {
             getline(file, sLine);
             size_t tpos;
             if (sLine.find("crc=")!=std::string::npos) {
