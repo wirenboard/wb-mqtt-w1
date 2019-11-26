@@ -189,7 +189,7 @@ int main(int argc, char *argv[])
     TMQTTOnewireHandler::TConfig mqtt_config;
     mqtt_config.Host = "localhost";
     mqtt_config.Port = 1883;
-    int poll_interval = 3 * 1000; //milliseconds
+    int poll_interval = 1 * 1000; //milliseconds
 
     int c;
     //~ int digit_optind = 0;
