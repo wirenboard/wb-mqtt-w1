@@ -1,0 +1,14 @@
+[Unit]
+Description=Kernel 1-Wire MQTT driver for WB-HomA
+Wants=wb-hwconf-magager.service wb-modules.service
+After=network.target wb-hwconf-magager.service wb-modules.service
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/usr/bin/wb-homa-w1
+
+[Install]
+WantedBy=multi-user.target

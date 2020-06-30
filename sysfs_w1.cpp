@@ -1,117 +1,115 @@
 #include "sysfs_w1.h"
 
-#define LOG(logger) ::logger.Log() << "[w1 device] "
-
-
-using namespace WBMQTT;
-
-bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & second)
-{
-    return (first.DeviceName == second.DeviceName) && (first.Family == second.Family);
-}
+#include "file_utils.h"
+#include <fstream>
+#include <wblib/utils.h>
 
 /*  @brief  class constructor, it fills sensor data parameters
  *  @param  device_name:    device name string what also determins the file descriptor of sensor
  */
 
-TSysfsOnewireDevice::TSysfsOnewireDevice(const string& device_name, const string& dir) : DeviceName(device_name), Family(TOnewireFamilyType::ProgResThermometer)
+TSysfsOneWireThermometer::TSysfsOneWireThermometer(const std::string& id,
+                                                   const std::string& deviceDir)
+    : Id(id)
 {
-    DeviceDir = dir + DeviceName;
+    DeviceFileName = deviceDir + Id + "/w1_slave";
 }
 
 /*  @brief  reading temperature from device
  *  @retval TMaybeValue object, if reading was not successful, TMaybeValue is not defined
  */
 
-TMaybeValue<double> TSysfsOnewireDevice::ReadTemperature() const
+double TSysfsOneWireThermometer::ReadTemperature() const
 {
     std::string data;
-    bool bFoundCrcOk=false;
+    bool        crcOk = false;
 
-    static const std::string tag("t=");
+    const std::string tag("t=");
 
     std::ifstream file;
-    std::string fileName=DeviceDir +"/w1_slave";
-    file.open(fileName.c_str());
-    if (file.is_open()) {
+    OpenWithException(file, DeviceFileName);
+
+    /*  reading file till eof could lead to a stuck
+        when device is removed */
+    for (size_t i = 0; i < 2; ++i) {
         std::string sLine;
-        /*  reading file till eof could lead to a stuck 
-            when device is removed */
-
-
-        for (int lines_num = 0; lines_num < 2; lines_num++) {
-            getline(file, sLine);
-            size_t tpos;
-            if (sLine.find("crc=")!=std::string::npos) {
-                if (sLine.find("YES")!=std::string::npos) {
-                    bFoundCrcOk=true;
-                }
-            } else if ((tpos=sLine.find(tag))!=std::string::npos) {
-                data = sLine.substr(tpos+tag.length());
+        std::getline(file, sLine);
+        if (sLine.find("crc=") != std::string::npos) {
+            if (sLine.find("YES") != std::string::npos) {
+                crcOk = true;
+            }
+        } else {
+            size_t tpos = sLine.find(tag);
+            if (tpos != std::string::npos) {
+                data = sLine.substr(tpos + tag.length());
             }
         }
-        file.close();
     }
 
-    if (bFoundCrcOk) {
-        LOG(Info) << "CRC OK" << fileName;
-
-        int data_int = std::stoi(data);
-
-        if (data_int == 85000) {
-            // wrong read
-            LOG(Info) << "Reading error at: " << fileName;
-            return NotDefinedMaybe;
-        }
-
-        if (data_int == 127937) {
-            // returned max possible temp, probably an error
-            // (it happens for chineese clones)
-            LOG(Info) << "Returns with max value (error): " << fileName;
-            return NotDefinedMaybe;
-        }
-
-        LOG(Info) << "Successful read at: " << fileName;
-        return TMaybeValue<double>(data_int/1000.0f); // Temperature given by kernel is in thousandths of degrees
+    if (!crcOk) {
+        throw TOneWireReadErrorException("Bad CRC", DeviceFileName);
     }
 
-    return NotDefinedMaybe;
+    if (data.empty()) {
+        throw TOneWireReadErrorException("Can't read temperature", DeviceFileName);
+    }
+
+    int dataInt = std::stoi(data);
+
+    // Thermometer can't measure themperature
+    if (dataInt == 85000) {
+        throw TOneWireReadErrorException("Measurement error", DeviceFileName);
+    }
+
+    // returned max possible temp, probably an error (it happens for chineese clones)
+    if (dataInt == 127937) {
+        throw TOneWireReadErrorException("Thermometer error", DeviceFileName);
+    }
+
+    return dataInt / 1000.0; // Temperature given by kernel is in thousandths of degrees
 }
+
+bool TSysfsOneWireThermometer::operator==(const TSysfsOneWireThermometer& val) const
+{
+    return (Id == val.Id);
+}
+
+const std::string& TSysfsOneWireThermometer::GetId() const
+{
+    return Id;
+}
+
+TSysfsOneWireManager::TSysfsOneWireManager(const std::string& devicesDir) : DevicesDir(devicesDir) {}
 
 /*  @brief  rescanning the available sensors on the bus and resfreshing "Devices" list
  */
-
-void TSysfsOnewireManager::RescanBus()
+void TSysfsOneWireManager::RescanBus()
 {
-    vector<TSysfsOnewireDevice> current_channels;
+    std::vector<TSysfsOneWireThermometer> currentChannels;
 
-    DIR *dir;
-    struct dirent *ent;
-    string entry_name;
-        /* print all the files and directories within directory */
-    if ((dir = opendir (devices_dir.c_str())) != NULL) {
-        while ((ent = readdir (dir)) != NULL) {
-            entry_name = ent->d_name;
-            if (StringStartsWith(entry_name, "28-") ||
-                StringStartsWith(entry_name, "10-") ||
-                StringStartsWith(entry_name, "22-") )
-            {
-                    current_channels.emplace_back(entry_name, devices_dir);
+    auto prefixes = {"28-", "10-", "22-"};
+    IterateDir(DevicesDir, [&](const auto& name) {
+        for (const auto& prefix : prefixes) {
+            if (WBMQTT::StringStartsWith(name, prefix)) {
+                currentChannels.emplace_back(name, DevicesDir);
             }
         }
-        closedir (dir);
-    } else {
-        cerr << "ERROR: could not open directory " << devices_dir << endl;
-    }
+        return false;
+    });
 
-    Devices.swap(current_channels);
+    Devices.swap(currentChannels);
 }
 
 /*  @brief  get function of "Devices" list
  *  @retval Devices list reference
  */
-
-const vector<TSysfsOnewireDevice>& TSysfsOnewireManager::GetDevicesP() const
+const std::vector<TSysfsOneWireThermometer>& TSysfsOneWireManager::GetDevices() const
 {
     return Devices;
+}
+
+TOneWireReadErrorException::TOneWireReadErrorException(const std::string& message,
+                                                       const std::string& deviceFileName)
+    : std::runtime_error(message + " (" + deviceFileName + ")")
+{
 }

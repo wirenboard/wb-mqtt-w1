@@ -1,3 +1,9 @@
+wb-homa-w1 (2.0) UNRELEASED; urgency=medium
+
+  * update to libwbmqtt1 0.2
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.ru>  Tue, 30 Jun 2020 11:11:41 +0500
+
 wb-homa-w1 (1.11.0) stable; urgency=medium
 
   * refactored with libwbmqtt1 library

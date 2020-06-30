@@ -3,5 +3,10 @@ debian/\.debhelper/
 debian/wb-homa-w1/
 *.log
 *.debhelper
+debian/*.substvars
 test/wb-homa-w1-test
 wb-homa-w1
+debhelper-build-stamp
+.vscode/
+debian/files
+.clang-format

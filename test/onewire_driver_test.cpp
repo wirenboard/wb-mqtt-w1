@@ -1,84 +1,76 @@
 
-#include <wblib/testing/fake_mqtt.h>
-#include <wblib/testing/fake_driver.h>
-#include <wblib/driver_args.h>
-#include <wblib/testing/testlog.h>
-#include <stdio.h>
-#include <gtest/gtest.h>
 #include "onewire_driver.h"
+#include <gtest/gtest.h>
+#include <stdio.h>
+#include <wblib/driver_args.h>
+#include <wblib/testing/fake_driver.h>
+#include <wblib/testing/fake_mqtt.h>
+#include <wblib/testing/testlog.h>
 
 using namespace std;
 using namespace WBMQTT;
 using namespace WBMQTT::Testing;
 
-#define LOG(logger) ::logger.Log() << "[onewire driver test] "
-string test_sensor_dir = string(getenv("TEST_DIR_ABS")) + string("/fake_sensors/1_sensor/");
+const string DeviceId("wb-w1");
 
-class TOnewireDriverTest: public TLoggedFixture
+class TOnewireDriverTest : public TLoggedFixture
 {
 protected:
-    void SetUp();
-    void TearDown();
+    string test_sensor_dir;
 
-    static const char * const Name;
+    void SetUp()
+    {
+        SetMode(E_Unordered);
+        TLoggedFixture::SetUp();
+
+        char* d = getenv("TEST_DIR_ABS");
+        if (d != NULL) {
+            test_sensor_dir = d;
+            test_sensor_dir += '/';
+        }
+        test_sensor_dir += "fake_sensors/";
+
+        MqttBroker   = NewFakeMqttBroker(*this);
+        MqttClient   = MqttBroker->MakeClient("onewire-driver-test");
+        auto backend = NewDriverBackend(MqttClient);
+        Driver       = NewDriver(TDriverArgs{}
+                               .SetId("onewire-driver-test")
+                               .SetBackend(backend)
+                               .SetIsTesting(true)
+                               .SetReownUnknownDevices(true)
+                               .SetUseStorage(false));
+
+        Driver->StartLoop();
+    }
+    void TearDown()
+    {
+        Driver->StopLoop();
+        TLoggedFixture::TearDown();
+    }
 
     PFakeMqttBroker MqttBroker;
     PFakeMqttClient MqttClient;
     PDeviceDriver   Driver;
-    unique_ptr<TOneWireDriver> driver;
 };
-
-const char * const TOnewireDriverTest::Name = "onewire-driver-test";
-
-void TOnewireDriverTest::SetUp()
-{
-    SetMode(E_Unordered);
-    TLoggedFixture::SetUp();
-
-    MqttBroker = NewFakeMqttBroker(*this);
-    MqttClient = MqttBroker->MakeClient(Name);
-    auto backend = NewDriverBackend(MqttClient);
-    Driver = NewDriver(TDriverArgs{}
-        .SetId(Name)
-        .SetBackend(backend)
-        .SetIsTesting(true)
-        .SetReownUnknownDevices(true)
-        .SetUseStorage(false)
-    );
-
-    Driver->StartLoop();
-}
-
-
-void TOnewireDriverTest::TearDown()
-{
-    Driver->StopLoop();
-    TLoggedFixture::TearDown();
-}
 
 TEST_F(TOnewireDriverTest, create_and_read)
 {
-    TOneWireDriver w1_driver(Driver, 10, test_sensor_dir);
-    w1_driver.UpdateDevicesAndControls();
-    w1_driver.UpdateSensorValues();
+    TOneWireDriverWorker w1_driver(DeviceId, Driver, Info, Error, test_sensor_dir + "1_sensor/");
+    w1_driver.RunIteration();
     Emit() << "Clear()";
-    w1_driver.Clear();
 }
 
 TEST_F(TOnewireDriverTest, move_and_read)
 {
-    TOneWireDriver w1_driver(Driver, 10, test_sensor_dir);
-    w1_driver.UpdateDevicesAndControls();
-    w1_driver.UpdateSensorValues();
+    TOneWireDriverWorker w1_driver(DeviceId, Driver, Info, Error, test_sensor_dir + "1_sensor/");
+    w1_driver.RunIteration();
     Emit() << "Moving sensor to tmp";
-    rename( (test_sensor_dir + string("28-00000a013d97")).c_str(), (test_sensor_dir + string("tmp-28-00000a013d97")).c_str() );
-    w1_driver.UpdateDevicesAndControls();
-    w1_driver.UpdateSensorValues();
+    rename((test_sensor_dir + string("1_sensor/28-00000a013d97")).c_str(),
+           (test_sensor_dir + string("1_sensor/tmp-28-00000a013d97")).c_str());
+    w1_driver.RunIteration();
     Emit() << "Moving sensor back";
-    rename( (test_sensor_dir + string("tmp-28-00000a013d97")).c_str(), (test_sensor_dir + string("28-00000a013d97")).c_str() );
-    w1_driver.UpdateDevicesAndControls();
-    w1_driver.UpdateSensorValues();
+    rename((test_sensor_dir + string("1_sensor/tmp-28-00000a013d97")).c_str(),
+           (test_sensor_dir + string("1_sensor/28-00000a013d97")).c_str());
+    w1_driver.RunIteration();
     Emit() << "Clear()";
-    w1_driver.Clear();
-
 }
