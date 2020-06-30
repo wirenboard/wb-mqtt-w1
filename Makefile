@@ -40,7 +40,7 @@ test: $(TEST_DIR)/$(TEST_BIN)
 
 	rm -f $(TEST_DIR)/*.dat.out
 	if [ "$(shell arch)" = "armv7l" ]; then \
-        $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || $(TEST_DIR)/abt.sh show; \
+        $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || { $(TEST_DIR)/abt.sh show; exit 1; }\
     else \
 		valgrind --error-exitcode=180 -q $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || \
 		if [ $$? = 180 ]; then \
