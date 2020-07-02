@@ -7,7 +7,7 @@ W1_SOURCES= 					\
 			threaded_runner.cpp \
 
 W1_OBJECTS=$(W1_SOURCES:.cpp=.o)
-W1_BIN=wb-homa-w1
+W1_BIN=wb-mqtt-w1
 W1_LIBS= -lwbmqtt1 -lpthread
 
 W1_TEST_SOURCES= 							\
@@ -19,7 +19,7 @@ TEST_DIR=test
 export TEST_DIR_ABS = $(shell pwd)/$(TEST_DIR)
 
 W1_TEST_OBJECTS=$(W1_TEST_SOURCES:.cpp=.o)
-TEST_BIN=wb-homa-w1-test
+TEST_BIN=wb-mqtt-w1-test
 TEST_LIBS=-lgtest -lwbmqtt_test_utils
 
 

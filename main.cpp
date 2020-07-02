@@ -14,7 +14,7 @@ WBMQTT::TLogger Error("ERROR: ", WBMQTT::TLogger::StdErr, WBMQTT::TLogger::RED);
 WBMQTT::TLogger Info("INFO: ", WBMQTT::TLogger::StdErr, WBMQTT::TLogger::GREY);
 WBMQTT::TLogger Debug("DEBUG: ", WBMQTT::TLogger::StdErr, WBMQTT::TLogger::WHITE, false);
 
-const auto     WBMQTT_DB_FILE            = "/var/lib/wb-homa-w1/libwbmqtt.db";
+const auto     WBMQTT_DB_FILE            = "/var/lib/wb-mqtt-w1/libwbmqtt.db";
 const auto     W1_DRIVER_INIT_TIMEOUT_S  = chrono::seconds(5);
 const auto     W1_DRIVER_STOP_TIMEOUT_S  = chrono::seconds(5); // topic cleanup can take a lot of time
 const uint32_t DEFAULT_POLL_INTERVALL_MS = 10000;
@@ -24,7 +24,7 @@ namespace
     void PrintUsage()
     {
         cout << "Usage:" << endl
-             << "  wb-homa-w1 [options]" << endl
+             << "  wb-mqtt-w1 [options]" << endl
              << "Options:" << endl
              << "  -d level     enable debuging output:" << endl
              << "                 1 - 1-Wire only;" << endl

@@ -1,11 +1,14 @@
 *.o
 debian/\.debhelper/
 debian/wb-homa-w1/
+debian/wb-mqtt-w1/
 *.log
 *.debhelper
 debian/*.substvars
 test/wb-homa-w1-test
+test/wb-mqtt-w1-test
 wb-homa-w1
+wb-mqtt-w1
 debhelper-build-stamp
 .vscode/
 debian/files
