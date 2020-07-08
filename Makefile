@@ -55,7 +55,4 @@ clean :
 
 
 install: all
-	install -d $(DESTDIR)
-	install -d $(DESTDIR)/usr/bin
-
-	install -m 0755  $(W1_BIN) $(DESTDIR)/usr/bin/$(W1_BIN)
+	install -D -m 0755  $(W1_BIN) $(DESTDIR)/usr/bin/$(W1_BIN)
