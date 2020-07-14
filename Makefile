@@ -1,3 +1,14 @@
+ifneq ($(DEB_HOST_MULTIARCH),)
+	CROSS_COMPILE ?= $(DEB_HOST_MULTIARCH)-
+endif
+
+ifeq ($(origin CC),default)
+	CC := $(CROSS_COMPILE)gcc
+endif
+ifeq ($(origin CXX),default)
+	CXX := $(CROSS_COMPILE)g++
+endif
+
 CXXFLAGS=-Wall -std=c++14 -Os -I.
 
 W1_SOURCES= 					\
@@ -13,7 +24,7 @@ W1_LIBS= -lwbmqtt1 -lpthread
 W1_TEST_SOURCES= 							\
 			$(TEST_DIR)/test_main.cpp		\
 			$(TEST_DIR)/sysfs_w1_test.cpp	\
-    		$(TEST_DIR)/onewire_driver_test.cpp	\
+			$(TEST_DIR)/onewire_driver_test.cpp	\
 			
 TEST_DIR=test
 export TEST_DIR_ABS = $(shell pwd)/$(TEST_DIR)
@@ -37,16 +48,15 @@ $(TEST_DIR)/$(TEST_BIN): $(W1_OBJECTS) $(W1_TEST_OBJECTS)
 	${CXX} $^ $(W1_LIBS) $(TEST_LIBS) -o $@
 
 test: $(TEST_DIR)/$(TEST_BIN)
-
 	rm -f $(TEST_DIR)/*.dat.out
-	if [ "$(shell arch)" = "armv7l" ]; then \
-        $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || { $(TEST_DIR)/abt.sh show; exit 1; }\
-    else \
+	if [ "$(shell arch)" != "armv7l" ] && [ "$(CROSS_COMPILE)" = "" ] || [ "$(CROSS_COMPILE)" = "x86_64-linux-gnu-" ]; then \
 		valgrind --error-exitcode=180 -q $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || \
 		if [ $$? = 180 ]; then \
 			echo "*** VALGRIND DETECTED ERRORS ***" 1>& 2; \
 			exit 1; \
 		else $(TEST_DIR)/abt.sh show; exit 1; fi; \
+    else \
+        $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || { $(TEST_DIR)/abt.sh show; exit 1; } \
 	fi
 
 clean :
