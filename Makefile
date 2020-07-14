@@ -45,7 +45,7 @@ $(W1_BIN) : main.o $(W1_OBJECTS)
 	${CXX} $^ ${W1_LIBS} -o $@
 
 $(TEST_DIR)/$(TEST_BIN): $(W1_OBJECTS) $(W1_TEST_OBJECTS)
-	${CXX} $^ $(W1_LIBS) $(TEST_LIBS) -o $@
+	${CXX} $^ $(W1_LIBS) $(TEST_LIBS) -o $@ -fno-lto
 
 test: $(TEST_DIR)/$(TEST_BIN)
 	rm -f $(TEST_DIR)/*.dat.out
