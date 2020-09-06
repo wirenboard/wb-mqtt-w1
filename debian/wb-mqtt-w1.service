@@ -12,3 +12,4 @@ ExecStart=/usr/bin/wb-mqtt-w1
 
 [Install]
 WantedBy=multi-user.target
+Alias=wb-homa-w1.service
