@@ -1,11 +1,22 @@
-Source: wb-homa-w1
+Source: wb-mqtt-w1
 Maintainer: Evgeny Boger <boger@contactless.ru>
 Section: misc
 Priority: optional
 Standards-Version: 3.9.2
-Build-Depends: debhelper (>= 9), pkg-config, g++, libjsoncpp-dev, libmosquittopp-dev, libmosquitto-dev, libwbmqtt-dev (>= 1.3.3)
+Build-Depends: debhelper (>= 10), pkg-config, libwbmqtt1-dev (>= 1.0.1), libwbmqtt1-test-utils (>= 1.0.1)
+
+Package: wb-mqtt-w1
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, libwbmqtt1 (>= 1.0.1)
+Breaks: wb-mqtt-confed (<< 1.0.2), wb-homa-w1 (<< 2.0.1)
+Replaces: wb-homa-w1 (<< 2.0.1)
+Conflicts: wb-homa-w1 (<< 2.0.1)
+Description: Wiren Board Smart Home MQTT generic 1-Wire (w1) driver compatible with HomA conventions
 
 Package: wb-homa-w1
-Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}, libjsoncpp0 | libjsoncpp1, libmosquittopp1, libmosquitto1, libwbmqtt (>= 1.3.3)
-Description: Wiren Board Smart Home MQTT generic 1-wire (w1) driver compatible with HomA conventions
+Depends: wb-mqtt-w1 (= ${source:Version}), ${misc:Depends}
+Architecture: all
+Priority: extra
+Section: oldlibs
+Description: transitional dummy package
+ This is a transitional dummy package. It can safely be removed.

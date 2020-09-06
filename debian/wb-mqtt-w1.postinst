@@ -1,0 +1,6 @@
+#!/bin/bash
+
+deb-systemd-helper enable wb-mqtt-w1.service >/dev/null || true
+
+#DEBHELPER#
+

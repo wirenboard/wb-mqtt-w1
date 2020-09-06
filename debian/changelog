@@ -1,3 +1,21 @@
+wb-mqtt-w1 (2.0.2) unstable; urgency=medium
+
+  * alias to wb-homa-w1 is added
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.ru>  Thu, 07 Jul 2020 15:05:01 +0500
+
+wb-mqtt-w1 (2.0.1) UNRELEASED; urgency=medium
+
+  * rename to wb-mqtt-w1
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.ru>  Thu, 02 Jul 2020 15:17:01 +0500
+
+wb-homa-w1 (2.0.0) UNRELEASED; urgency=medium
+
+  * update to libwbmqtt1 0.2
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.ru>  Tue, 30 Jun 2020 11:11:41 +0500
+
 wb-homa-w1 (1.11.0) stable; urgency=medium
 
   * refactored with libwbmqtt1 library
