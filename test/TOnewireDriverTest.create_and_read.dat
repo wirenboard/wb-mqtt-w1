@@ -6,15 +6,13 @@ Publish: /devices/wb-w1/controls/28-00000a013d97/meta/order: '1' (QoS 1, retaine
 Publish: /devices/wb-w1/controls/28-00000a013d97/meta/readonly: '1' (QoS 1, retained)
 Publish: /devices/wb-w1/controls/28-00000a013d97/meta/type: 'temperature' (QoS 1, retained)
 Publish: /devices/wb-w1/controls/28-00000a013d97: '26.312' (QoS 1, retained)
-Subscribe: /devices/wb-w1/controls/28-00000a013d97/on (QoS 0)
 Subscribe: /devices/wb-w1/controls/# (QoS 0)
 (retain) -> /devices/wb-w1/controls/28-00000a013d97: '26.312' (QoS 1, retained)
 (retain) -> /devices/wb-w1/controls/28-00000a013d97/meta/order: '1' (QoS 1, retained)
 (retain) -> /devices/wb-w1/controls/28-00000a013d97/meta/readonly: '1' (QoS 1, retained)
 (retain) -> /devices/wb-w1/controls/28-00000a013d97/meta/type: 'temperature' (QoS 1, retained)
-Clear()
 Unsubscribe -- onewire-driver-test: /devices/wb-w1/controls/#
-Unsubscribe -- onewire-driver-test: /devices/wb-w1/controls/28-00000a013d97/on
+Clear()
 Publish: /devices/wb-w1/controls/28-00000a013d97: '' (QoS 1, retained)
 Publish: /devices/wb-w1/controls/28-00000a013d97/meta/order: '' (QoS 1, retained)
 Publish: /devices/wb-w1/controls/28-00000a013d97/meta/readonly: '' (QoS 1, retained)
