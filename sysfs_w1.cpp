@@ -31,7 +31,7 @@ double TSysfsOneWireThermometer::ReadTemperature() const
 
     /*  reading file till eof could lead to a stuck
         when device is removed */
-    for (size_t i = 0; i < 2; ++i) {
+    while (file.good()) {
         std::string sLine;
         std::getline(file, sLine);
         if (sLine.find("crc=") != std::string::npos) {
