@@ -1,72 +1,84 @@
 #pragma once
+
+#include <stdexcept>
 #include <string>
-#include <map>
-#include <wbmqtt/utils.h>
+#include <vector>
 
-using namespace std;
-
-const string SysfsOnewireDevicesPath = "/sys/bus/w1/devices/";
-
-enum class TOnewireFamilyType
-{
-    ProgResThermometer = 0x28,
-    Unknown = 0x00,
-};
-
-class TSysfsOnewireDevice
+/**
+ * @brief 1-Wire thermometer class
+ *
+ */
+class TSysfsOneWireThermometer
 {
 public:
-    TSysfsOnewireDevice(const string& device_name);
+    /**
+     * @brief Construct a new TSysfsOneWireThermometer object
+     *
+     * @param id unique identifier code of the thermometer, usually in form 28-00000a013d97
+     * @param dir directory holding thermometer's folder in sysfs, usually /sys/bus/w1/devices/
+     */
+    TSysfsOneWireThermometer(const std::string& id, const std::string& dir);
 
-    inline TOnewireFamilyType GetDeviceFamily() const {return Family;};
-    inline const string & GetDeviceId() const {return DeviceId;};
+    /**
+     * @brief Get the Id object
+     *
+     * @return const std::string& thermometer's identifier code, got in constructor
+     */
+    const std::string& GetId() const;
 
-    TMaybe<float> ReadTemperature() const;
+    /**
+     * @brief Read temperature from sysfs. Throws TOneWireReadErrorException if readed value is
+     * incorrect.
+     *
+     * @return double readed temperature in Celsius degrees
+     */
+    double ReadTemperature() const;
 
-    friend bool operator== (const TSysfsOnewireDevice & first, const TSysfsOnewireDevice & second);
+    bool operator==(const TSysfsOneWireThermometer& val) const;
+
 private:
-    string DeviceName;
-    TOnewireFamilyType Family;
-    string DeviceId;
-    string DeviceDir;
-
-
+    std::string Id;
+    std::string DeviceFileName;
 };
 
-
-class TSysfsOnewireManager
+/**
+ * @brief The class performs 1-Wire thermometers discovery and holds a list of known devices
+ *
+ */
+class TSysfsOneWireManager
 {
 public:
-    TSysfsOnewireManager()  {};
+    /**
+     * @brief Construct a new TSysfsOneWireManager object
+     * 
+     * @param devicesDir directory holding thermometer's folders in sysfs, usually /sys/bus/w1/devices/
+     */
+    TSysfsOneWireManager(const std::string& devicesDir);
 
+    /**
+     * @brief Perform devices discovery
+     * 
+     */
     void RescanBus();
 
+    /**
+     * @brief Get the Devices object
+     * 
+     * @return const std::vector<TSysfsOneWireThermometer>& get found 1-Wire thermometers
+     */
+    const std::vector<TSysfsOneWireThermometer>& GetDevices() const;
 
 private:
-    // FIXME: once found, device will be kept indefinetely
-    // consider some kind of ref-counting smart vectors instead
-
-    map<const string, TSysfsOnewireDevice> Devices;
-
+    std::string                           DevicesDir;
+    std::vector<TSysfsOneWireThermometer> Devices;
 };
 
-
-class TOneWireReadErrorException : public std::exception
+/**
+ * @brief Error during reading temperature from 1-Wire thermometer
+ * 
+ */
+class TOneWireReadErrorException : public std::runtime_error
 {
 public:
-   TOneWireReadErrorException(const std::string& deviceFileName) : Message("1-Wire system : error reading value from ") {Message.append(deviceFileName);}
-   virtual ~TOneWireReadErrorException() throw() {}
-   virtual const char* what() const throw() {return Message.c_str();}
-protected:
-   std::string Message;
-};
-
-class TOneWireWriteErrorException : public std::exception
-{
-public:
-   TOneWireWriteErrorException(const std::string& deviceFileName) : Message("1-Wire system : error writing value from ") {Message.append(deviceFileName);}
-   virtual ~TOneWireWriteErrorException() throw() {}
-   virtual const char* what() const throw() {return Message.c_str();}
-protected:
-   std::string Message;
+    TOneWireReadErrorException(const std::string& message, const std::string& deviceFileName);
 };
