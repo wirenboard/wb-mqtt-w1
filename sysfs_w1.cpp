@@ -5,7 +5,7 @@
 #include <wblib/utils.h>
 #include <unistd.h>
 #include <fcntl.h>
-
+#include <algorithm>
 
 using namespace std::chrono;
 
@@ -225,6 +225,7 @@ std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::Res
     for (auto& d: Devices) {
         res.push_back(d.second);
     }
+    std::sort(res.begin(), res.end(), [](const auto& v1, const auto& v2) {return v1->GetId() < v2->GetId();});
     return res;
 }
 
