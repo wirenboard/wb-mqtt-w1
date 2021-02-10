@@ -1,6 +1,7 @@
 #include "sysfs_w1.h"
 #include <gtest/gtest.h>
 #include <wblib/testing/testlog.h>
+#include <fstream>
 
 using namespace std;
 using namespace WBMQTT;
@@ -30,41 +31,24 @@ TEST_F(TSysfsOnewireDeviceTest, name)
     EXPECT_EQ(s.GetId(), "sensor_name");
 }
 
-TEST_F(TSysfsOnewireDeviceTest, operator_true)
-{
-    TSysfsOneWireThermometer s1 = TSysfsOneWireThermometer("sensor_name", "asd");
-    TSysfsOneWireThermometer s2 = TSysfsOneWireThermometer("sensor_name", "asd");
-    EXPECT_EQ(s1, s2);
-}
-
-TEST_F(TSysfsOnewireDeviceTest, operator_false)
-{
-    TSysfsOneWireThermometer s1 = TSysfsOneWireThermometer("sensor_name1", "asd");
-    TSysfsOneWireThermometer s2 = TSysfsOneWireThermometer("sensor_name2", "asd");
-    EXPECT_EQ((s1 == s2), false);
-}
-
 TEST_F(TSysfsOnewireDeviceTest, 1_sensor_read)
 {
-    TSysfsOneWireThermometer s1 =
-        TSysfsOneWireThermometer("28-00000a013d97", test_sensor_root_dir + string("1_sensor/"));
-    auto v = s1.ReadTemperature();
+    auto s1 = TSysfsOneWireThermometer("28-00000a013d97", test_sensor_root_dir + string("1_sensor/w1_bus_master1/"));
+    auto v = s1.GetTemperature();
     EXPECT_EQ(to_string(v), "26.312000");
 }
 
 TEST_F(TSysfsOnewireDeviceTest, no_sensor_read)
 {
-    TSysfsOneWireThermometer s1 =
-        TSysfsOneWireThermometer("28-00000a013d97", test_sensor_root_dir + string("no_sensor/"));
-    ASSERT_THROW(s1.ReadTemperature(), exception);
+    auto s1 = TSysfsOneWireThermometer("28-00000a013d97", test_sensor_root_dir + string("no_sensor/w1_bus_master1/"));
+    ASSERT_THROW(s1.GetTemperature(), exception);
 }
 
 TEST_F(TSysfsOnewireDeviceTest, wrong_crc)
 {
-    TSysfsOneWireThermometer s1 =
-        TSysfsOneWireThermometer("28-00000a013000-wrong-crc",
-                                 test_sensor_root_dir + string("2_sensor/"));
-    ASSERT_THROW(s1.ReadTemperature(), runtime_error);
+    auto s1 = TSysfsOneWireThermometer("28-00000a013000-wrong-crc",
+                                       test_sensor_root_dir + string("2_sensor/w1_bus_master1/"));
+    ASSERT_THROW(s1.GetTemperature(), runtime_error);
 }
 
 //////// SysfsOnewireManager test
@@ -87,21 +71,28 @@ protected:
 
 TEST_F(TSysfsOnewireManagerTest, no_sensor)
 {
-    TSysfsOneWireManager manager = TSysfsOneWireManager(test_sensor_root_dir + string("no_sensor"));
-    manager.RescanBus();
-    EXPECT_EQ(manager.GetDevices().size(), 0);
+    auto m = TSysfsOneWireManager(test_sensor_root_dir + string("no_sensor/"), Debug, Error);
+    EXPECT_EQ(m.RescanBusAndRead().size(), 0);
 }
 
 TEST_F(TSysfsOnewireManagerTest, 1_sensor)
 {
-    TSysfsOneWireManager manager = TSysfsOneWireManager(test_sensor_root_dir + string("1_sensor"));
-    manager.RescanBus();
-    EXPECT_EQ(manager.GetDevices().size(), 1);
+    auto m = TSysfsOneWireManager(test_sensor_root_dir + string("1_sensor/"), Debug, Error);
+    EXPECT_EQ(m.RescanBusAndRead().size(), 1);
 }
 
 TEST_F(TSysfsOnewireManagerTest, 2_sensor)
 {
-    TSysfsOneWireManager manager = TSysfsOneWireManager(test_sensor_root_dir + string("2_sensor"));
-    manager.RescanBus();
-    EXPECT_EQ(manager.GetDevices().size(), 2);
+    auto m = TSysfsOneWireManager(test_sensor_root_dir + string("2_sensor/"), Debug, Error);
+    EXPECT_EQ(m.RescanBusAndRead().size(), 2);
+}
+
+TEST_F(TSysfsOnewireManagerTest, 2_buses)
+{
+    std::ofstream f;
+    f.open(test_sensor_root_dir + "2_buses/w1_bus_master2/therm_bulk_read", std::ofstream::trunc);
+    f << "1";
+    f.close();
+    auto m = TSysfsOneWireManager(test_sensor_root_dir + string("2_buses/"), Debug, Error);
+    EXPECT_EQ(m.RescanBusAndRead().size(), 2);
 }

@@ -12,6 +12,7 @@ public:
     TOneWireDriverWorker(const std::string&           deviceId,
                          const WBMQTT::PDeviceDriver& mqttDriver,
                          WBMQTT::TLogger&             infoLogger,
+                         WBMQTT::TLogger&             debugLogger,
                          WBMQTT::TLogger&             errorLogger,
                          const std::string&           thermometersSysfsDir);
     ~TOneWireDriverWorker();
@@ -23,6 +24,7 @@ private:
     WBMQTT::PLocalDevice  Device;
     TSysfsOneWireManager  OneWireManager;
     WBMQTT::TLogger&      InfoLogger;
+    WBMQTT::TLogger&      DebugLogger;
     WBMQTT::TLogger&      ErrorLogger;
     std::string           DeviceId;
     bool                  FirstTime;

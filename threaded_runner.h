@@ -31,12 +31,12 @@ public:
      * @brief Construct a new TThreadedPeriodicalRunner object
      * 
      * @param worker pointer to a IPeriodicalWorker object
-     * @param pollIntervalMs execution interval in ms
+     * @param pollInterval execution interval in ms
      * @param threadName Name for execution thread
      * @param logger logger object for information messages
      */
     TThreadedPeriodicalRunner(std::unique_ptr<IPeriodicalWorker> worker,
-                              uint32_t                           pollIntervalMs,
+                              std::chrono::milliseconds          pollInterval,
                               const std::string&                 threadName,
                               WBMQTT::TLogger&                   logger);
     ~TThreadedPeriodicalRunner();

@@ -168,9 +168,10 @@ int main(int argc, char* argv[])
                 std::unique_ptr<IPeriodicalWorker>(new TOneWireDriverWorker("wb-w1",
                                                                             mqttDriver,
                                                                             ::Info,
+                                                                            ::Debug,
                                                                             ::Error,
                                                                             "/sys/bus/w1/devices/")),
-                pollInterval,
+                std::chrono::milliseconds(pollInterval),
                 "w1 thread",
                 ::Info);
 

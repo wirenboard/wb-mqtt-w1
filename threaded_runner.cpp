@@ -9,29 +9,28 @@ using namespace WBMQTT;
 IPeriodicalWorker::~IPeriodicalWorker() {}
 
 TThreadedPeriodicalRunner::TThreadedPeriodicalRunner(unique_ptr<IPeriodicalWorker> worker,
-                                                     uint32_t                      pollIntervalMs,
+                                                     std::chrono::milliseconds     pollInterval,
                                                      const string&                 threadName,
                                                      TLogger&                      logger)
     : Worker(move(worker)), Active(false)
 {
-    if (pollIntervalMs == 0) {
+    if (pollInterval.count() < 1) {
         throw invalid_argument("polling intervall must be greater than zero");
     }
 
     Active = true;
-    chrono::milliseconds interval(pollIntervalMs);
-    WorkerThread = MakeThread(threadName, {[this, interval, threadName, &logger] {
-                                  logger.Log() << threadName << "Started";
+    WorkerThread = MakeThread(threadName, {[this, pollInterval, threadName, &logger] {
+                                  logger.Log() << threadName << " Started";
 
                                   while (1) {
                                       Worker->RunIteration();
 
                                       unique_lock<mutex> lk(ActiveMutex);
-                                      if (ActiveCV.wait_for(lk, interval, [&] { return !Active; })) {
+                                      if (ActiveCV.wait_for(lk, pollInterval, [&] { return !Active; })) {
                                           break;
                                       }
                                   }
-                                  logger.Log() << threadName << "Stopped";
+                                  logger.Log() << threadName << " Stopped";
                               }});
 }
 
