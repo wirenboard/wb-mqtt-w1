@@ -1,3 +1,10 @@
+wb-mqtt-w1 (2.2.0) unstable; urgency=medium
+
+  * Update dependency on libwbmqtt1 to support fixed libmosquitto facade
+    (required for newer mosquitto backports)
+
+ -- Nikita Maslov <nikita.maslov@wirenboard.ru>  Thu, 16 Sep 2021 13:19:22 +0300
+
 wb-mqtt-w1 (2.1.0) unstable; urgency=medium
 
   * Thermometers bulk read support is added. Appropriate kernel driver is needed.
