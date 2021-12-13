@@ -57,7 +57,7 @@ namespace
 
         int dataInt = std::stoi(str.c_str());
 
-        // Thermometer can't measure themperature
+        // Thermometer can't measure temperature
         if (dataInt == 85000) {
             throw TOneWireReadErrorException("Measurement error", deviceFileName);
         }
@@ -70,7 +70,7 @@ namespace
         return dataInt / 1000.0; // Temperature given by kernel is in thousandths of degrees
     }
 
-    double GetBulkReadedTemperature(const std::string& deviceFileName)
+    double GetBulkReadTemperature(const std::string& deviceFileName)
     {
         return GetTemperatureFromString(ReadLine(deviceFileName), deviceFileName);
     }
@@ -108,6 +108,12 @@ namespace
 
         return GetTemperatureFromString(data, deviceFileName);
     }
+
+    struct TBusMaster
+    {
+        std::string Dir;
+        bool        SupportsBulkRead;
+    };
 }
 
 TSysfsOneWireThermometer::TSysfsOneWireThermometer(const std::string& id, const std::string& dir, bool bulkRead)
@@ -126,7 +132,7 @@ void TSysfsOneWireThermometer::SetDeviceFileName(const std::string& dir)
 double TSysfsOneWireThermometer::GetTemperature() const
 {
     if (BulkRead) {
-        return GetBulkReadedTemperature(DeviceFileName);
+        return GetBulkReadTemperature(DeviceFileName);
     } 
     return GetDirectConvertedTemperature(DeviceFileName);
 }
@@ -157,27 +163,28 @@ bool TSysfsOneWireThermometer::FoundAgain(const std::string& dir)
 }
 
 TSysfsOneWireManager::TSysfsOneWireManager(const std::string& devicesDir, WBMQTT::TLogger& debugLogger, WBMQTT::TLogger& errorLogger) 
-    : DebugLogger(debugLogger), ErrorLogger(errorLogger)
-{
-    IterateDir(devicesDir, [&](const auto& name) {
-        if (WBMQTT::StringStartsWith(name, "w1_bus_master")) {
-            TBusMaster bm;
-            bm.Dir = devicesDir + name;
-            bm.SupportsBulkRead = (access((bm.Dir + "/therm_bulk_read").c_str(), F_OK ) == 0);
-            BusMasters.push_back(bm);
-        }
-        return false;
-    });
-}
+    : DevicesDir(devicesDir), DebugLogger(debugLogger), ErrorLogger(errorLogger)
+{}
 
 std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::RescanBusAndRead()
 {
-    auto prefixes = {"28-", "10-", "22-"};
+    const auto prefixes = {"28-", "10-", "22-"};
     erase_if(Devices, [](const auto& it){return it.second->GetStatus() == TSysfsOneWireThermometer::Disconnected; });
     for (auto& d: Devices) {
         d.second->MarkAsDisconnected();
     }
-    for (auto& bm: BusMasters) {
+
+    std::vector<TBusMaster> busMasters;
+
+    IterateDir(DevicesDir, [&](const auto& name) {
+        if (!WBMQTT::StringStartsWith(name, "w1_bus_master")) {
+            return false;
+        }
+        TBusMaster bm;
+        bm.Dir = DevicesDir + name;
+        bm.SupportsBulkRead = (access((bm.Dir + "/therm_bulk_read").c_str(), F_OK ) == 0);
+        busMasters.push_back(bm);
+
         if (bm.SupportsBulkRead) {
             RunBulkRead(bm.Dir + "/therm_bulk_read", ErrorLogger);
         }
@@ -197,13 +204,14 @@ std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::Res
                 }
                 return false;
             });
-    }
+        return false;
+    });
 
     auto time = steady_clock::now();
     bool inConversion = true;
     while(inConversion && (duration_cast<milliseconds>(steady_clock::now() - time) < MAX_CONVERSION_TIME)) {
         inConversion = false;
-        for (auto& bm: BusMasters) {
+        for (auto& bm: busMasters) {
             if (bm.SupportsBulkRead) {
                 try {
                     auto status = ReadLine(bm.Dir + "/therm_bulk_read");
