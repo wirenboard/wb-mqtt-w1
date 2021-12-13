@@ -38,10 +38,10 @@ public:
     const std::string& GetId() const;
 
     /**
-     * @brief Get temperature. Throws TOneWireReadErrorException if readed value is
+     * @brief Get temperature. Throws TOneWireReadErrorException if read value is
      * incorrect.
      *
-     * @return double readed temperature in Celsius degrees
+     * @return double read temperature in Celsius degrees
      */
     double GetTemperature() const;
 
@@ -51,12 +51,12 @@ public:
     PresenceStatus GetStatus() const;
 
     /**
-     * @brief Mark thermomerer as disconnected. It can be deleted during next search cycle.
+     * @brief Mark thermometer as disconnected. It can be deleted during next search cycle.
      */
     void MarkAsDisconnected();
 
     /**
-     * @brief The thermometer is found again durin search cycle.
+     * @brief The thermometer is found again during search cycle.
      *        Set directory holding thermometer's folder in sysfs.
      *        The function provides hot switching between buses.
      * 
@@ -97,15 +97,9 @@ public:
     std::vector<std::shared_ptr<TSysfsOneWireThermometer>> RescanBusAndRead();
 
 private:
-    struct TBusMaster
-    {
-        std::string Dir;
-        bool        SupportsBulkRead;
-    };
-
-    std::vector<TBusMaster> BusMasters;
-    WBMQTT::TLogger&        DebugLogger;
-    WBMQTT::TLogger&        ErrorLogger;
+    std::string      DevicesDir;
+    WBMQTT::TLogger& DebugLogger;
+    WBMQTT::TLogger& ErrorLogger;
 
     std::unordered_map<std::string,  std::shared_ptr<TSysfsOneWireThermometer>> Devices;
 };
