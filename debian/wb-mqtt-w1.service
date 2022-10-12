@@ -2,13 +2,13 @@
 Description=Kernel 1-Wire MQTT driver for WB-HomA
 Wants=wb-hwconf-manager.service wb-modules.service
 After=network.target wb-hwconf-manager.service wb-modules.service
+StartLimitIntervalSec=0
+StartLimitBurst=0
 
 [Service]
 Type=simple
 Restart=always
 RestartSec=20
-StartLimitIntervalSec=0
-StartLimitBurst=0
 User=root
 ExecStart=/usr/bin/wb-mqtt-w1
 
