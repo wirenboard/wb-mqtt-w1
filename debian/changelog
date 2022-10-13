@@ -1,3 +1,9 @@
+wb-mqtt-w1 (2.2.3+nmu1) UNRELEASED; urgency=medium
+
+  * fix build error
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Fri, 14 Oct 2022 03:24:36 -0400
+
 wb-mqtt-w1 (2.2.3) stable; urgency=medium
 
   * Fix service unit
