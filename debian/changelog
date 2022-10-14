@@ -1,4 +1,4 @@
-wb-mqtt-w1 (2.2.3+nmu1) UNRELEASED; urgency=medium
+wb-mqtt-w1 (2.2.4) stable; urgency=medium
 
   * fix build error
 
