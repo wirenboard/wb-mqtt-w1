@@ -9,60 +9,74 @@ ifeq ($(origin CXX),default)
 	CXX := $(CROSS_COMPILE)g++
 endif
 
-CXXFLAGS=-Wall -std=c++14 -Os -I.
+ifeq ($(DEBUG),)
+	BUILD_DIR ?= build/release
+else
+	BUILD_DIR ?= build/debug
+endif
 
-W1_SOURCES= 					\
-			sysfs_w1.cpp		\
-			onewire_driver.cpp 	\
-			file_utils.cpp		\
-			threaded_runner.cpp \
+PREFIX = /usr
 
-W1_OBJECTS=$(W1_SOURCES:.cpp=.o)
-W1_BIN=wb-mqtt-w1
-W1_LIBS= -lwbmqtt1 -lpthread
+W1_BIN = wb-mqtt-w1
+SRC_DIR = src
 
-W1_TEST_SOURCES= 							\
-			$(TEST_DIR)/test_main.cpp		\
-			$(TEST_DIR)/sysfs_w1_test.cpp	\
-			$(TEST_DIR)/onewire_driver_test.cpp	\
-			
-TEST_DIR=test
-export TEST_DIR_ABS = $(shell pwd)/$(TEST_DIR)
+W1_SOURCES = $(shell find $(SRC_DIR) -name *.cpp -and -not -name main.cpp)
+W1_OBJECTS = $(W1_SOURCES:%=$(BUILD_DIR)/%.o)
 
-W1_TEST_OBJECTS=$(W1_TEST_SOURCES:.cpp=.o)
-TEST_BIN=wb-mqtt-w1-test
-TEST_LIBS=-lgtest -lwbmqtt_test_utils
+CXXFLAGS = -Wall -std=c++14 -I$(SRC_DIR)
+LDFLAGS = -lwbmqtt1 -lpthread
 
+ifeq ($(DEBUG), 1)
+	CXXFLAGS += -O0 -ggdb -rdynamic -fprofile-arcs -ftest-coverage
+	LDFLAGS += -lgcov
+else
+	CXXFLAGS += -Os -DNDEBUG
+endif
 
+TEST_DIR = test
+W1_TEST_SOURCES = $(shell find $(TEST_DIR) -name *.cpp)
+W1_TEST_OBJECTS = $(W1_TEST_SOURCES:%=$(BUILD_DIR)/%.o)
+TEST_BIN = wb-mqtt-w1-test
+TEST_LIBS = -lgtest -lwbmqtt_test_utils
 
-all : $(W1_BIN)
+export TEST_DIR_ABS = $(CURDIR)/$(TEST_DIR)
+
+all: $(W1_BIN)
 
 # W1
-%.o : %.cpp
-	${CXX} -c $< -o $@ ${CXXFLAGS}
+$(BUILD_DIR)/%.cpp.o: %.cpp
+	mkdir -p $(dir $@)
+	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
-$(W1_BIN) : main.o $(W1_OBJECTS)
-	${CXX} $^ ${W1_LIBS} -o $@
+$(W1_BIN): $(W1_OBJECTS) $(BUILD_DIR)/src/main.cpp.o
+	$(CXX) $^ $(LDFLAGS) -o $(BUILD_DIR)/$@
 
-$(TEST_DIR)/$(TEST_BIN): $(W1_OBJECTS) $(W1_TEST_OBJECTS)
-	${CXX} $^ $(W1_LIBS) $(TEST_LIBS) -o $@ -fno-lto
+$(BUILD_DIR)/test/%.o: test/%.cpp
+	$(CXX) -c $(CXXFLAGS) -o $@ $^
 
-test: $(TEST_DIR)/$(TEST_BIN)
+$(BUILD_DIR)/$(TEST_DIR)/$(TEST_BIN): $(W1_OBJECTS) $(W1_TEST_OBJECTS)
+	$(CXX) $^ $(LDFLAGS) $(TEST_LIBS) -o $@ -fno-lto
+
+test: $(BUILD_DIR)/$(TEST_DIR)/$(TEST_BIN)
 	rm -f $(TEST_DIR)/*.dat.out
 	if [ "$(shell arch)" != "armv7l" ] && [ "$(CROSS_COMPILE)" = "" ] || [ "$(CROSS_COMPILE)" = "x86_64-linux-gnu-" ]; then \
-		valgrind --error-exitcode=180 -q $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || \
+		valgrind --error-exitcode=180 -q $(BUILD_DIR)/$(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || \
 		if [ $$? = 180 ]; then \
 			echo "*** VALGRIND DETECTED ERRORS ***" 1>& 2; \
 			exit 1; \
 		else $(TEST_DIR)/abt.sh show; exit 1; fi; \
     else \
-        $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || { $(TEST_DIR)/abt.sh show; exit 1; } \
+        $(BUILD_DIR)/$(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || { $(TEST_DIR)/abt.sh show; exit 1; } \
 	fi
 
-clean :
-	-rm -f *.o $(W1_BIN)
-	-rm -f $(TEST_DIR)/*.o $(TEST_DIR)/$(TEST_BIN)
+lcov: test
+ifeq ($(DEBUG), 1)
+	geninfo --no-external -b . -o $(BUILD_DIR)/coverage.info $(BUILD_DIR)/src
+	genhtml $(BUILD_DIR)/coverage.info -o $(BUILD_DIR)/cov_html
+endif
 
+clean:
+	-rm -fr build
 
 install: all
-	install -D -m 0755  $(W1_BIN) $(DESTDIR)/usr/bin/$(W1_BIN)
+	install -Dm0755 $(BUILD_DIR)/$(W1_BIN) -t $(DESTDIR)$(PREFIX)/bin

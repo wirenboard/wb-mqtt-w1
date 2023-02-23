@@ -19,7 +19,7 @@ class TOnewireDriverTest : public TLoggedFixture
 protected:
     string test_sensor_dir;
 
-    void SetUp()
+    void SetUp() override
     {
         SetMode(E_Unordered);
         TLoggedFixture::SetUp();
@@ -43,7 +43,8 @@ protected:
 
         Driver->StartLoop();
     }
-    void TearDown()
+
+    void TearDown() override
     {
         Driver->StopLoop();
         TLoggedFixture::TearDown();

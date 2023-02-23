@@ -3,6 +3,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <iomanip>
+#include <memory>
 
 TNoDirError::TNoDirError(const std::string& msg) : std::runtime_error(msg) {}
 

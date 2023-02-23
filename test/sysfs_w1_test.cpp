@@ -14,7 +14,7 @@ class TSysfsOnewireDeviceTest : public TLoggedFixture
 protected:
     string test_sensor_root_dir;
 
-    void SetUp()
+    void SetUp() override
     {
         char* d = getenv("TEST_DIR_ABS");
         if (d != NULL) {
@@ -58,7 +58,7 @@ class TSysfsOnewireManagerTest : public TLoggedFixture
 protected:
     string test_sensor_root_dir;
 
-    void   SetUp()
+    void SetUp() override
     {
         char* d = getenv("TEST_DIR_ABS");
         if (d != NULL) {
