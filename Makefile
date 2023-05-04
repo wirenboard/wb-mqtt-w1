@@ -1,3 +1,5 @@
+PREFIX = /usr
+
 ifneq ($(DEB_HOST_MULTIARCH),)
 	CROSS_COMPILE ?= $(DEB_HOST_MULTIARCH)-
 endif
@@ -33,19 +35,17 @@ W1_TEST_OBJECTS=$(W1_TEST_SOURCES:.cpp=.o)
 TEST_BIN=wb-mqtt-w1-test
 TEST_LIBS=-lgtest -lwbmqtt_test_utils
 
-
-
 all : $(W1_BIN)
 
 # W1
 %.o : %.cpp
-	${CXX} -c $< -o $@ ${CXXFLAGS}
+	$(CXX) -c $< -o $@ $(CXXFLAGS)
 
 $(W1_BIN) : main.o $(W1_OBJECTS)
-	${CXX} $^ ${W1_LIBS} -o $@
+	$(CXX) $^ $(W1_LIBS) -o $@
 
 $(TEST_DIR)/$(TEST_BIN): $(W1_OBJECTS) $(W1_TEST_OBJECTS)
-	${CXX} $^ $(W1_LIBS) $(TEST_LIBS) -o $@ -fno-lto
+	$(CXX) $^ $(W1_LIBS) $(TEST_LIBS) -o $@ -fno-lto
 
 test: $(TEST_DIR)/$(TEST_BIN)
 	rm -f $(TEST_DIR)/*.dat.out
@@ -55,14 +55,13 @@ test: $(TEST_DIR)/$(TEST_BIN)
 			echo "*** VALGRIND DETECTED ERRORS ***" 1>& 2; \
 			exit 1; \
 		else $(TEST_DIR)/abt.sh show; exit 1; fi; \
-    else \
-        $(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || { $(TEST_DIR)/abt.sh show; exit 1; } \
+	else \
+		$(TEST_DIR)/$(TEST_BIN) $(TEST_ARGS) || { $(TEST_DIR)/abt.sh show; exit 1; } \
 	fi
 
 clean :
 	-rm -f *.o $(W1_BIN)
 	-rm -f $(TEST_DIR)/*.o $(TEST_DIR)/$(TEST_BIN)
 
-
 install: all
-	install -D -m 0755  $(W1_BIN) $(DESTDIR)/usr/bin/$(W1_BIN)
+	install -Dm0755 $(W1_BIN) -t $(DESTDIR)$(PREFIX)/bin

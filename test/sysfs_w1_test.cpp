@@ -1,7 +1,7 @@
 #include "sysfs_w1.h"
+#include <fstream>
 #include <gtest/gtest.h>
 #include <wblib/testing/testlog.h>
-#include <fstream>
 
 using namespace std;
 using namespace WBMQTT;
@@ -9,7 +9,7 @@ using namespace WBMQTT::Testing;
 
 //////// SysfsOnewireDevice test
 
-class TSysfsOnewireDeviceTest : public TLoggedFixture
+class TSysfsOnewireDeviceTest: public TLoggedFixture
 {
 protected:
     string test_sensor_root_dir;
@@ -53,12 +53,12 @@ TEST_F(TSysfsOnewireDeviceTest, wrong_crc)
 
 //////// SysfsOnewireManager test
 
-class TSysfsOnewireManagerTest : public TLoggedFixture
+class TSysfsOnewireManagerTest: public TLoggedFixture
 {
 protected:
     string test_sensor_root_dir;
 
-    void   SetUp()
+    void SetUp()
     {
         char* d = getenv("TEST_DIR_ABS");
         if (d != NULL) {

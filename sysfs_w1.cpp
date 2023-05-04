@@ -1,11 +1,11 @@
 #include "sysfs_w1.h"
 
 #include "file_utils.h"
-#include <fstream>
-#include <wblib/utils.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <algorithm>
+#include <fcntl.h>
+#include <fstream>
+#include <unistd.h>
+#include <wblib/utils.h>
 
 using namespace std::chrono;
 
@@ -19,7 +19,7 @@ namespace
     template<class T, class Pred> void erase_if(T& c, Pred pred)
     {
         auto last = c.end();
-        for (auto i = c.begin(); i != last; ) {
+        for (auto i = c.begin(); i != last;) {
             if (pred(*i)) {
                 i = c.erase(i);
             } else {
@@ -39,7 +39,7 @@ namespace
 
     bool RunBulkRead(const std::string& fileName, WBMQTT::TLogger& logger)
     {
-        auto fd = open(fileName.c_str(), O_WRONLY|O_APPEND);
+        auto fd = open(fileName.c_str(), O_WRONLY | O_APPEND);
         if (fd < 0) {
             LOG(logger) << "Can't open file:" << fileName;
             return false;
@@ -75,10 +75,10 @@ namespace
         return GetTemperatureFromString(ReadLine(deviceFileName), deviceFileName);
     }
 
-    double GetDirectConvertedTemperature(const std::string& deviceFileName) 
+    double GetDirectConvertedTemperature(const std::string& deviceFileName)
     {
         std::string data;
-        bool        crcOk = false;
+        bool crcOk = false;
 
         const std::string tag("t=");
 
@@ -112,7 +112,7 @@ namespace
     struct TBusMaster
     {
         std::string Dir;
-        bool        SupportsBulkRead;
+        bool SupportsBulkRead;
     };
 }
 
@@ -133,7 +133,7 @@ double TSysfsOneWireThermometer::GetTemperature() const
 {
     if (BulkRead) {
         return GetBulkReadTemperature(DeviceFileName);
-    } 
+    }
     return GetDirectConvertedTemperature(DeviceFileName);
 }
 
@@ -162,14 +162,18 @@ bool TSysfsOneWireThermometer::FoundAgain(const std::string& dir)
     return false;
 }
 
-TSysfsOneWireManager::TSysfsOneWireManager(const std::string& devicesDir, WBMQTT::TLogger& debugLogger, WBMQTT::TLogger& errorLogger) 
-    : DevicesDir(devicesDir), DebugLogger(debugLogger), ErrorLogger(errorLogger)
+TSysfsOneWireManager::TSysfsOneWireManager(const std::string& devicesDir,
+                                           WBMQTT::TLogger& debugLogger,
+                                           WBMQTT::TLogger& errorLogger)
+    : DevicesDir(devicesDir),
+      DebugLogger(debugLogger),
+      ErrorLogger(errorLogger)
 {}
 
 std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::RescanBusAndRead()
 {
     const auto prefixes = {"28-", "10-", "22-"};
-    erase_if(Devices, [](const auto& it){return it.second->GetStatus() == TSysfsOneWireThermometer::Disconnected; });
+    erase_if(Devices, [](const auto& it) { return it.second->GetStatus() == TSysfsOneWireThermometer::Disconnected; });
     for (auto& d: Devices) {
         d.second->MarkAsDisconnected();
     }
@@ -182,7 +186,7 @@ std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::Res
         }
         TBusMaster bm;
         bm.Dir = DevicesDir + name;
-        bm.SupportsBulkRead = (access((bm.Dir + "/therm_bulk_read").c_str(), F_OK ) == 0);
+        bm.SupportsBulkRead = (access((bm.Dir + "/therm_bulk_read").c_str(), F_OK) == 0);
         busMasters.push_back(bm);
 
         if (bm.SupportsBulkRead) {
@@ -190,26 +194,30 @@ std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::Res
         }
 
         IterateDir(bm.Dir, [&](const auto& name) {
-                for (const auto& prefix : prefixes) {
-                    if (WBMQTT::StringStartsWith(name, prefix)) {
-                        auto it = Devices.find(name);
-                        if (it == Devices.end()) {
-                            it = Devices.insert({name, std::make_shared<TSysfsOneWireThermometer>(name, bm.Dir, bm.SupportsBulkRead)}).first;
-                        } else {
-                            if (!it->second->FoundAgain(bm.Dir)) {
-                                LOG(DebugLogger) << name << " is switched to " << bm.Dir;
-                            }
+            for (const auto& prefix: prefixes) {
+                if (WBMQTT::StringStartsWith(name, prefix)) {
+                    auto it = Devices.find(name);
+                    if (it == Devices.end()) {
+                        it =
+                            Devices
+                                .insert({name,
+                                         std::make_shared<TSysfsOneWireThermometer>(name, bm.Dir, bm.SupportsBulkRead)})
+                                .first;
+                    } else {
+                        if (!it->second->FoundAgain(bm.Dir)) {
+                            LOG(DebugLogger) << name << " is switched to " << bm.Dir;
                         }
                     }
                 }
-                return false;
-            });
+            }
+            return false;
+        });
         return false;
     });
 
     auto time = steady_clock::now();
     bool inConversion = true;
-    while(inConversion && (duration_cast<milliseconds>(steady_clock::now() - time) < MAX_CONVERSION_TIME)) {
+    while (inConversion && (duration_cast<milliseconds>(steady_clock::now() - time) < MAX_CONVERSION_TIME)) {
         inConversion = false;
         for (auto& bm: busMasters) {
             if (bm.SupportsBulkRead) {
@@ -233,12 +241,10 @@ std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::Res
     for (auto& d: Devices) {
         res.push_back(d.second);
     }
-    std::sort(res.begin(), res.end(), [](const auto& v1, const auto& v2) {return v1->GetId() < v2->GetId();});
+    std::sort(res.begin(), res.end(), [](const auto& v1, const auto& v2) { return v1->GetId() < v2->GetId(); });
     return res;
 }
 
-TOneWireReadErrorException::TOneWireReadErrorException(const std::string& message,
-                                                       const std::string& deviceFileName)
+TOneWireReadErrorException::TOneWireReadErrorException(const std::string& message, const std::string& deviceFileName)
     : std::runtime_error(message + " (" + deviceFileName + ")")
-{
-}
+{}

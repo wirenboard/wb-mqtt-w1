@@ -6,26 +6,26 @@
 #include <wblib/log.h>
 #include <wblib/wbmqtt.h>
 
-class TOneWireDriverWorker : public IPeriodicalWorker
+class TOneWireDriverWorker: public IPeriodicalWorker
 {
 public:
-    TOneWireDriverWorker(const std::string&           deviceId,
+    TOneWireDriverWorker(const std::string& deviceId,
                          const WBMQTT::PDeviceDriver& mqttDriver,
-                         WBMQTT::TLogger&             infoLogger,
-                         WBMQTT::TLogger&             debugLogger,
-                         WBMQTT::TLogger&             errorLogger,
-                         const std::string&           thermometersSysfsDir);
+                         WBMQTT::TLogger& infoLogger,
+                         WBMQTT::TLogger& debugLogger,
+                         WBMQTT::TLogger& errorLogger,
+                         const std::string& thermometersSysfsDir);
     ~TOneWireDriverWorker();
 
     void RunIteration() override;
 
 private:
     WBMQTT::PDeviceDriver MqttDriver;
-    WBMQTT::PLocalDevice  Device;
-    TSysfsOneWireManager  OneWireManager;
-    WBMQTT::TLogger&      InfoLogger;
-    WBMQTT::TLogger&      DebugLogger;
-    WBMQTT::TLogger&      ErrorLogger;
-    std::string           DeviceId;
-    bool                  FirstTime;
+    WBMQTT::PLocalDevice Device;
+    TSysfsOneWireManager OneWireManager;
+    WBMQTT::TLogger& InfoLogger;
+    WBMQTT::TLogger& DebugLogger;
+    WBMQTT::TLogger& ErrorLogger;
+    std::string DeviceId;
+    bool FirstTime;
 };

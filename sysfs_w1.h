@@ -3,8 +3,8 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 #include <wblib/log.h>
 
@@ -17,9 +17,9 @@ class TSysfsOneWireThermometer
 public:
     enum PresenceStatus
     {
-        New,           // the thermometer was found during last search cycle
-        Connected,     // the thermometer is connected and was connected during last search cycle
-        Disconnected   // the thermometer was not found during last search cycle
+        New,         // the thermometer was found during last search cycle
+        Connected,   // the thermometer is connected and was connected during last search cycle
+        Disconnected // the thermometer was not found during last search cycle
     };
 
     /**
@@ -60,7 +60,7 @@ public:
      * @brief The thermometer is found again during search cycle.
      *        Set directory holding thermometer's folder in sysfs.
      *        The function provides hot switching between buses.
-     * 
+     *
      * @param dir directory holding thermometer's folder in sysfs, usually /sys/bus/w1/devices/w1_bus_masterX.
      * @return true - the thermometer was located on the same bus
      * @return false - thermometer's bus is changed
@@ -70,10 +70,10 @@ public:
 private:
     void SetDeviceFileName(const std::string& dir);
 
-    std::string    Id;
-    std::string    DeviceFileName;
+    std::string Id;
+    std::string DeviceFileName;
     PresenceStatus Status;
-    bool           BulkRead;
+    bool BulkRead;
 };
 
 /**
@@ -85,31 +85,31 @@ class TSysfsOneWireManager
 public:
     /**
      * @brief Construct a new TSysfsOneWireManager object
-     * 
+     *
      * @param devicesDir directory holding 1-Wire bus master files in sysfs, usually /sys/bus/w1/devices/
      */
     TSysfsOneWireManager(const std::string& devicesDir, WBMQTT::TLogger& debugLogger, WBMQTT::TLogger& errorLogger);
 
     /**
      * @brief Perform devices discovery and starts bulk reading if possible.
-     * 
+     *
      * @return array of available thermometers, thermometers disconnected since last call have Deleted status
      */
     std::vector<std::shared_ptr<TSysfsOneWireThermometer>> RescanBusAndRead();
 
 private:
-    std::string      DevicesDir;
+    std::string DevicesDir;
     WBMQTT::TLogger& DebugLogger;
     WBMQTT::TLogger& ErrorLogger;
 
-    std::unordered_map<std::string,  std::shared_ptr<TSysfsOneWireThermometer>> Devices;
+    std::unordered_map<std::string, std::shared_ptr<TSysfsOneWireThermometer>> Devices;
 };
 
 /**
  * @brief Error during reading temperature from 1-Wire thermometer
- * 
+ *
  */
-class TOneWireReadErrorException : public std::runtime_error
+class TOneWireReadErrorException: public std::runtime_error
 {
 public:
     TOneWireReadErrorException(const std::string& message, const std::string& deviceFileName);
