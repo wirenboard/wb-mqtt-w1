@@ -3,6 +3,7 @@
 #include <cstring>
 #include <dirent.h>
 #include <iomanip>
+#include <filesystem>
 
 TNoDirError::TNoDirError(const std::string& msg) : std::runtime_error(msg) {}
 
@@ -27,36 +28,16 @@ void WriteToFile(const std::string& fileName, const std::string& value)
 
 void IterateDir(const std::string& dirName, std::function<bool(const std::string&)> fn)
 {
-    DIR* dir = opendir(dirName.c_str());
+    try {
+        const std::filesystem::path dirPath{dirName};
 
-    if (dir == NULL) {
-        throw TNoDirError("Can't open directory: " + dirName);
-    }
-
-    dirent*                                 ent;
-    auto                                    closeFn = [](DIR* d) { closedir(d); };
-    std::unique_ptr<DIR, decltype(closeFn)> dirPtr(dir, closeFn);
-    while ((ent = readdir(dirPtr.get())) != NULL) {
-        if (fn(ent->d_name)) {
-            return;
-        }
-    }
-}
-
-std::string IterateDir(const std::string&                      dirName,
-                       const std::string&                      pattern,
-                       std::function<bool(const std::string&)> fn)
-{
-    std::string res;
-    IterateDir(dirName, [&](const auto& name) {
-        if (name.find(pattern) != std::string::npos) {
-            std::string d(dirName + "/" + name);
-            if (fn(d)) {
-                res = d;
-                return true;
+        for (const auto& entry: std::filesystem::directory_iterator(dirPath)) {
+            const auto filenameStr = entry.path().filename().string();
+            if (fn(filenameStr)) {
+                return;
             }
         }
-        return false;
-    });
-    return res;
+    } catch (std::filesystem::filesystem_error const& ex) {
+        throw TNoDirError(ex.what());
+    }
 }
