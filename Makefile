@@ -9,7 +9,7 @@ ifeq ($(origin CXX),default)
 	CXX := $(CROSS_COMPILE)g++
 endif
 
-CXXFLAGS=-Wall -std=c++14 -Os -I.
+CXXFLAGS=-Wall -std=c++17 -Os -I.
 
 W1_SOURCES= 					\
 			sysfs_w1.cpp		\
@@ -19,7 +19,7 @@ W1_SOURCES= 					\
 
 W1_OBJECTS=$(W1_SOURCES:.cpp=.o)
 W1_BIN=wb-mqtt-w1
-W1_LIBS= -lwbmqtt1 -lpthread
+W1_LIBS= -lwbmqtt1 -lpthread -lstdc++fs
 
 W1_TEST_SOURCES= 							\
 			$(TEST_DIR)/test_main.cpp		\
