@@ -10,6 +10,13 @@ test/wb-mqtt-w1-test
 wb-homa-w1
 wb-mqtt-w1
 debhelper-build-stamp
-.vscode/
 debian/files
+
+### Visual Studio Code ###
+.vscode
 .clang-format
+.devcontainer
+
+### direnv ###
+.direnv
+.envrc

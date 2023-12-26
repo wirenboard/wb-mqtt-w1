@@ -3,7 +3,6 @@
 #include <sstream>
 #include <string>
 
-
 inline void HexDump(std::stringstream& output, const std::vector<uint8_t>& value)
 {
     // TBD: move this to libwbmqtt (HexDump?)

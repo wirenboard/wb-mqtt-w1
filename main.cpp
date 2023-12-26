@@ -14,9 +14,9 @@ WBMQTT::TLogger Error("ERROR: ", WBMQTT::TLogger::StdErr, WBMQTT::TLogger::RED);
 WBMQTT::TLogger Info("INFO: ", WBMQTT::TLogger::StdErr, WBMQTT::TLogger::GREY);
 WBMQTT::TLogger Debug("DEBUG: ", WBMQTT::TLogger::StdErr, WBMQTT::TLogger::WHITE, false);
 
-const auto     WBMQTT_DB_FILE            = "/var/lib/wb-mqtt-w1/libwbmqtt.db";
-const auto     W1_DRIVER_INIT_TIMEOUT_S  = chrono::seconds(5);
-const auto     W1_DRIVER_STOP_TIMEOUT_S  = chrono::seconds(5); // topic cleanup can take a lot of time
+const auto WBMQTT_DB_FILE = "/var/lib/wb-mqtt-w1/libwbmqtt.db";
+const auto W1_DRIVER_INIT_TIMEOUT_S = chrono::seconds(5);
+const auto W1_DRIVER_STOP_TIMEOUT_S = chrono::seconds(5); // topic cleanup can take a lot of time
 const uint32_t DEFAULT_POLL_INTERVALL_MS = 10000;
 
 namespace
@@ -35,79 +35,75 @@ namespace
              << "  -h IP        MQTT broker IP (default: localhost)" << endl
              << "  -u user      MQTT user (optional)" << endl
              << "  -P password  MQTT user password (optional)" << endl
-             << "  -i interval  polling interval, ms (default: " << DEFAULT_POLL_INTERVALL_MS
-             << " ms)" << endl;
+             << "  -i interval  polling interval, ms (default: " << DEFAULT_POLL_INTERVALL_MS << " ms)" << endl;
     }
 
-    void ParseCommadLine(int                           argc,
-                         char*                         argv[],
-                         WBMQTT::TMosquittoMqttConfig& mqttConfig,
-                         uint32_t&                     pollingInterval)
+    void ParseCommadLine(int argc, char* argv[], WBMQTT::TMosquittoMqttConfig& mqttConfig, uint32_t& pollingInterval)
     {
         int debugLevel = 0;
         int c;
 
         while ((c = getopt(argc, argv, "d:i:h:p:u:P:")) != -1) {
             switch (c) {
-            case 'd':
-                debugLevel = stoi(optarg);
-                break;
-            case 'p':
-                mqttConfig.Port = stoi(optarg);
-                break;
-            case 'h':
-                mqttConfig.Host = optarg;
-                break;
-            case 'i':
-                pollingInterval = stoul(optarg);
-                break;
-            case 'u':
-                mqttConfig.User = optarg;
-                break;
-            case 'P':
-                mqttConfig.Password = optarg;
-                break;
+                case 'd':
+                    debugLevel = stoi(optarg);
+                    break;
+                case 'p':
+                    mqttConfig.Port = stoi(optarg);
+                    break;
+                case 'h':
+                    mqttConfig.Host = optarg;
+                    break;
+                case 'i':
+                    pollingInterval = stoul(optarg);
+                    break;
+                case 'u':
+                    mqttConfig.User = optarg;
+                    break;
+                case 'P':
+                    mqttConfig.Password = optarg;
+                    break;
 
-            case '?':
-            default:
-                PrintUsage();
-                exit(2);
+                case '?':
+                default:
+                    PrintUsage();
+                    exit(2);
             }
         }
 
         switch (debugLevel) {
-        case 0:
-            break;
-        case -1:
-            ::Info.SetEnabled(false);
-            break;
+            case 0:
+                break;
+            case -1:
+                ::Info.SetEnabled(false);
+                break;
 
-        case -2:
-            WBMQTT::Info.SetEnabled(false);
-            break;
+            case -2:
+                WBMQTT::Info.SetEnabled(false);
+                break;
 
-        case -3:
-            WBMQTT::Info.SetEnabled(false);
-            ::Info.SetEnabled(false);
-            break;
+            case -3:
+                WBMQTT::Info.SetEnabled(false);
+                ::Info.SetEnabled(false);
+                break;
 
-        case 1:
-            ::Debug.SetEnabled(true);
-            break;
+            case 1:
+                ::Debug.SetEnabled(true);
+                break;
 
-        case 2:
-            WBMQTT::Debug.SetEnabled(true);
-            break;
+            case 2:
+                WBMQTT::Debug.SetEnabled(true);
+                break;
 
-        case 3:
-            WBMQTT::Debug.SetEnabled(true);
-            ::Debug.SetEnabled(true);
-            break;
+            case 3:
+                WBMQTT::Debug.SetEnabled(true);
+                ::Debug.SetEnabled(true);
+                break;
 
-        default:
-            cout << "Invalid -d parameter value " << debugLevel << endl;
-            PrintUsage();
-            exit(2);
+            default:
+                cout << "Invalid -d parameter value " << debugLevel << endl;
+                PrintUsage();
+                exit(2);
         }
 
         if (optind < argc) {
@@ -145,19 +141,19 @@ int main(int argc, char* argv[])
     WBMQTT::SignalHandling::Start();
 
     WBMQTT::TMosquittoMqttConfig mqttConfig{};
-    mqttConfig.Id         = "wb-w1";
+    mqttConfig.Id = "wb-w1";
     uint32_t pollInterval = DEFAULT_POLL_INTERVALL_MS;
     ParseCommadLine(argc, argv, mqttConfig, pollInterval);
 
     cout << "MQTT broker " << mqttConfig.Host << ':' << mqttConfig.Port << endl;
 
-    auto mqttDriver = WBMQTT::NewDriver(
-        WBMQTT::TDriverArgs{}
-            .SetBackend(WBMQTT::NewDriverBackend(WBMQTT::NewMosquittoMqttClient(mqttConfig)))
-            .SetId(mqttConfig.Id)
-            .SetUseStorage(false)
-            .SetReownUnknownDevices(true)
-            .SetStoragePath(WBMQTT_DB_FILE));
+    auto mqttDriver =
+        WBMQTT::NewDriver(WBMQTT::TDriverArgs{}
+                              .SetBackend(WBMQTT::NewDriverBackend(WBMQTT::NewMosquittoMqttClient(mqttConfig)))
+                              .SetId(mqttConfig.Id)
+                              .SetUseStorage(false)
+                              .SetReownUnknownDevices(true)
+                              .SetStoragePath(WBMQTT_DB_FILE));
 
     mqttDriver->StartLoop();
     mqttDriver->WaitForReady();
@@ -165,12 +161,8 @@ int main(int argc, char* argv[])
     try {
         {
             TThreadedPeriodicalRunner r(
-                std::unique_ptr<IPeriodicalWorker>(new TOneWireDriverWorker("wb-w1",
-                                                                            mqttDriver,
-                                                                            ::Info,
-                                                                            ::Debug,
-                                                                            ::Error,
-                                                                            "/sys/bus/w1/devices/")),
+                std::unique_ptr<IPeriodicalWorker>(
+                    new TOneWireDriverWorker("wb-w1", mqttDriver, ::Info, ::Debug, ::Error, "/sys/bus/w1/devices/")),
                 std::chrono::milliseconds(pollInterval),
                 "w1 thread",
                 ::Info);

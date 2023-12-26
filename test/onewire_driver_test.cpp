@@ -1,8 +1,8 @@
 
 #include "onewire_driver.h"
+#include <fstream>
 #include <gtest/gtest.h>
 #include <stdio.h>
-#include <fstream>
 #include <wblib/driver_args.h>
 #include <wblib/testing/fake_driver.h>
 #include <wblib/testing/fake_mqtt.h>
@@ -14,7 +14,7 @@ using namespace WBMQTT::Testing;
 
 const string DeviceId("wb-w1");
 
-class TOnewireDriverTest : public TLoggedFixture
+class TOnewireDriverTest: public TLoggedFixture
 {
 protected:
     string test_sensor_dir;
@@ -31,10 +31,10 @@ protected:
         }
         test_sensor_dir += "fake_sensors/";
 
-        MqttBroker   = NewFakeMqttBroker(*this);
-        MqttClient   = MqttBroker->MakeClient("onewire-driver-test");
+        MqttBroker = NewFakeMqttBroker(*this);
+        MqttClient = MqttBroker->MakeClient("onewire-driver-test");
         auto backend = NewDriverBackend(MqttClient);
-        Driver       = NewDriver(TDriverArgs{}
+        Driver = NewDriver(TDriverArgs{}
                                .SetId("onewire-driver-test")
                                .SetBackend(backend)
                                .SetIsTesting(true)
@@ -51,7 +51,7 @@ protected:
 
     PFakeMqttBroker MqttBroker;
     PFakeMqttClient MqttClient;
-    PDeviceDriver   Driver;
+    PDeviceDriver Driver;
 };
 
 TEST_F(TOnewireDriverTest, create_and_read)

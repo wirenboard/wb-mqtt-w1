@@ -6,13 +6,15 @@
 using namespace std;
 using namespace WBMQTT;
 
-IPeriodicalWorker::~IPeriodicalWorker() {}
+IPeriodicalWorker::~IPeriodicalWorker()
+{}
 
 TThreadedPeriodicalRunner::TThreadedPeriodicalRunner(unique_ptr<IPeriodicalWorker> worker,
-                                                     std::chrono::milliseconds     pollInterval,
-                                                     const string&                 threadName,
-                                                     TLogger&                      logger)
-    : Worker(move(worker)), Active(false)
+                                                     std::chrono::milliseconds pollInterval,
+                                                     const string& threadName,
+                                                     TLogger& logger)
+    : Worker(move(worker)),
+      Active(false)
 {
     if (pollInterval.count() < 1) {
         throw invalid_argument("polling intervall must be greater than zero");
