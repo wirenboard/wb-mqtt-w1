@@ -3,6 +3,8 @@ debian/\.debhelper/
 debian/wb-homa-w1/
 debian/wb-mqtt-w1/
 *.log
+*.buildinfo
+*.changes
 *.debhelper
 debian/*.substvars
 test/wb-homa-w1-test
@@ -11,6 +13,7 @@ wb-homa-w1
 wb-mqtt-w1
 debhelper-build-stamp
 debian/files
+compile_commands.json
 
 ### Visual Studio Code ###
 .vscode
