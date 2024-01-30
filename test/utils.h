@@ -1,7 +1,9 @@
 #pragma once
 
+#include <iomanip>
 #include <sstream>
 #include <string>
+#include <vector>
 
 inline void HexDump(std::stringstream& output, const std::vector<uint8_t>& value)
 {
