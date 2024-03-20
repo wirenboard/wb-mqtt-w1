@@ -1,3 +1,9 @@
+wb-mqtt-w1 (2.2.10) stable; urgency=medium
+
+  * Add device title translation
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Wed, 20 Mar 2024 10:28:00 +0400
+
 wb-mqtt-w1 (2.2.9) stable; urgency=medium
 
   * Fix clang-tidy, no functional changes
