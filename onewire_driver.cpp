@@ -65,7 +65,8 @@ TOneWireDriverWorker::TOneWireDriverWorker(const string& deviceId,
     auto tx = MqttDriver->BeginTx();
     Device = tx->CreateDevice(TLocalDeviceArgs{}
                                   .SetId(DeviceId)
-                                  .SetTitle("1-wire Thermometers")
+                                  .SetTitle("1-wire Thermometers", "en")
+                                  .SetTitle("Термометры 1-wire", "ru")
                                   .SetIsVirtual(true)
                                   .SetDoLoadPrevious(false))
                  .GetValue();
