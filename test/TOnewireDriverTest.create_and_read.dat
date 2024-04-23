@@ -1,5 +1,5 @@
 Subscribe: /devices/+/meta/driver (QoS 0)
-Publish: /devices/wb-w1/meta: '{"driver":"onewire-driver-test","title":{"en":"1-wire Thermometers","ru":"Термометры 1-wire"}}' (QoS 1, retained)
+Publish: /devices/wb-w1/meta: '{"driver":"onewire-driver-test","title":{"en":"1-wire Thermometers","ru":"\u0422\u0435\u0440\u043c\u043e\u043c\u0435\u0442\u0440\u044b 1-wire"}}' (QoS 1, retained)
 Publish: /devices/wb-w1/meta/driver: 'onewire-driver-test' (QoS 1, retained)
 Publish: /devices/wb-w1/meta/name: '1-wire Thermometers' (QoS 1, retained)
 Publish: /devices/wb-w1/controls/28-00000a013d97/meta: '{"order":1,"readonly":true,"type":"temperature"}' (QoS 1, retained)
