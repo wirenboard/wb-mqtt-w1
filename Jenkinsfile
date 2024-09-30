@@ -1,3 +1,5 @@
 buildDebSbuild defaultTargets: 'bullseye-armhf bullseye-arm64',
                defaultRunLintian: true,
-               defaultStyleCheckDirs: '.'
+               defaultStyleCheckDirs: '.',
+               defaultRunCoverage: false,
+               defaultCoverageMin: '78'
