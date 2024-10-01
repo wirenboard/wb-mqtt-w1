@@ -21,20 +21,20 @@ else
 	LDFLAGS += --coverage
 endif
 
-W1_SOURCES= 					\
-			sysfs_w1.cpp		\
-			onewire_driver.cpp 	\
-			file_utils.cpp		\
-			threaded_runner.cpp \
+W1_SOURCES= \
+	sysfs_w1.cpp        \
+	onewire_driver.cpp  \
+	file_utils.cpp      \
+	threaded_runner.cpp \
 
 W1_OBJECTS=$(W1_SOURCES:.cpp=.o)
 W1_BIN=wb-mqtt-w1
 
-W1_TEST_SOURCES= 							\
-			$(TEST_DIR)/test_main.cpp		\
-			$(TEST_DIR)/sysfs_w1_test.cpp	\
-			$(TEST_DIR)/onewire_driver_test.cpp	\
-			
+W1_TEST_SOURCES= \
+	$(TEST_DIR)/test_main.cpp           \
+	$(TEST_DIR)/sysfs_w1_test.cpp       \
+	$(TEST_DIR)/onewire_driver_test.cpp \
+
 TEST_DIR=test
 export TEST_DIR_ABS = $(shell pwd)/$(TEST_DIR)
 
@@ -78,8 +78,8 @@ ifneq ($(DEBUG),)
 endif
 
 clean :
-	-rm -f *.o $(W1_BIN)
-	-rm -f $(TEST_DIR)/*.o $(TEST_DIR)/$(TEST_BIN)
+	-rm -f *.{o,gcda,gcno} $(W1_BIN)
+	-rm -f $(TEST_DIR)/*.{o,gcda,gcno} $(TEST_DIR)/$(TEST_BIN)
 
 install: all
 	install -Dm0755 $(W1_BIN) -t $(DESTDIR)$(PREFIX)/bin

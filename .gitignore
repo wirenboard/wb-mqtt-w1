@@ -1,4 +1,6 @@
 *.o
+*.gcda
+*.gcno
 debian/\.debhelper/
 debian/wb-homa-w1/
 debian/wb-mqtt-w1/
