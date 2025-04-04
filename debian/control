@@ -2,7 +2,7 @@ Source: wb-mqtt-w1
 Maintainer: Wiren Board team <info@wirenboard.com>
 Section: misc
 Priority: optional
-Standards-Version: 3.9.2
+Standards-Version: 4.5.1
 Build-Depends: debhelper (>= 10),
                gcovr:all,
                libgtest-dev,
@@ -17,12 +17,5 @@ Depends: ${shlibs:Depends}, ${misc:Depends}
 Breaks: wb-mqtt-confed (<< 1.0.2), wb-homa-w1 (<< 2.0.1)
 Replaces: wb-homa-w1 (<< 2.0.1)
 Conflicts: wb-homa-w1 (<< 2.0.1)
-Description: Wiren Board Smart Home MQTT generic 1-Wire (w1) driver compatible with HomA conventions
-
-Package: wb-homa-w1
-Depends: wb-mqtt-w1 (= ${source:Version}), ${misc:Depends}
-Architecture: any
-Priority: extra
-Section: oldlibs
-Description: transitional dummy package
- This is a transitional dummy package. It can safely be removed.
+Description: Wiren Board MQTT 1-Wire driver
+ Wiren Board MQTT generic 1-Wire (w1) driver compatible with HomA conventions.
