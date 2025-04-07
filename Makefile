@@ -11,7 +11,7 @@ ifeq ($(origin CXX),default)
 	CXX := $(CROSS_COMPILE)g++
 endif
 
-CXXFLAGS = -Wall -std=c++17 -I.
+CXXFLAGS = -Wall -std=c++20 -I.
 LDFLAGS = -lwbmqtt1 -lpthread -lstdc++fs
 
 ifeq ($(DEBUG),)
