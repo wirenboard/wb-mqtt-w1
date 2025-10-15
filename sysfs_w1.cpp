@@ -14,7 +14,10 @@ using namespace std::chrono;
 namespace
 {
     const auto MAX_CONVERSION_TIME = milliseconds(2000);
+    const auto MAX_VALUE_CHANGE = 10000;
     const char BULK_CONVERSION_TRIGGER[] = "trigger";
+
+    int lastValue = 0;
 
     template<class T, class Pred> void erase_if(T& c, Pred pred)
     {
@@ -58,7 +61,7 @@ namespace
         int dataInt = std::stoi(str.c_str());
 
         // Thermometer can't measure temperature
-        if (dataInt == 85000) {
+        if (dataInt == 85000 && abs(dataInt - lastValue) > MAX_VALUE_CHANGE) {
             throw TOneWireReadErrorException("Measurement error", deviceFileName);
         }
 
@@ -67,6 +70,7 @@ namespace
             throw TOneWireReadErrorException("Thermometer error", deviceFileName);
         }
 
+        lastValue = dataInt;
         return dataInt / 1000.0; // Temperature given by kernel is in thousandths of degrees
     }
 
