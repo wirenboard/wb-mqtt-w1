@@ -51,6 +51,42 @@ TEST_F(TSysfsOnewireDeviceTest, wrong_crc)
     ASSERT_THROW(s1.GetTemperature(), runtime_error);
 }
 
+TEST_F(TSysfsOnewireDeviceTest, 1_sensor_85_degree_ok)
+{
+    std::ofstream stream(test_sensor_root_dir + string("error_sensor/w1_bus_master1/28-00001080d4ad/temperature"));
+    auto s1 = TSysfsOneWireThermometer("28-00001080d4ad",
+                                       test_sensor_root_dir + string("error_sensor/w1_bus_master1/"),
+                                       true);
+
+    stream.seekp(0);
+    stream << "75000\n";
+    stream.flush();
+    EXPECT_EQ(to_string(s1.GetTemperature()), "75.000000");
+
+    stream.seekp(0);
+    stream << "85000\n";
+    stream.flush();
+    EXPECT_EQ(to_string(s1.GetTemperature()), "85.000000");
+}
+
+TEST_F(TSysfsOnewireDeviceTest, 1_sensor_85_degree_error)
+{
+    std::ofstream stream(test_sensor_root_dir + string("error_sensor/w1_bus_master1/28-00001080d4ad/temperature"));
+    auto s1 = TSysfsOneWireThermometer("28-00001080d4ad",
+                                       test_sensor_root_dir + string("error_sensor/w1_bus_master1/"),
+                                       true);
+
+    stream.seekp(0);
+    stream << "25000\n";
+    stream.flush();
+    EXPECT_EQ(to_string(s1.GetTemperature()), "25.000000");
+
+    stream.seekp(0);
+    stream << "85000\n";
+    stream.flush();
+    EXPECT_THROW(s1.GetTemperature(), TOneWireReadErrorException);
+}
+
 //////// SysfsOnewireManager test
 
 class TSysfsOnewireManagerTest: public TLoggedFixture
