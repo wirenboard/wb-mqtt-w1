@@ -1,6 +1,12 @@
+wb-mqtt-w1 (2.3.1) stable; urgency=medium
+
+  * Update changelog and readme
+
+ -- Ilya Titov <ilya.titov@wirenboard.com>  Tue, 21 Oct 2025 11:26:14 +0300
+
 wb-mqtt-w1 (2.3.0) stable; urgency=medium
 
-  * Add sensor startup value (85 degrees) handling
+  * Add previous value check for measurement error detection if startup value (85 degrees) received
 
  -- Ilya Titov <ilya.titov@wirenboard.com>  Mon, 20 Oct 2025 13:44:02 +0300
 
