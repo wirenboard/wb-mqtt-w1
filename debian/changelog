@@ -1,6 +1,6 @@
 wb-mqtt-w1 (2.3.0) stable; urgency=medium
 
-  * Add sensor startup value (85 degree) handling
+  * Add sensor startup value (85 degrees) handling
 
  -- Ilya Titov <ilya.titov@wirenboard.com>  Mon, 20 Oct 2025 13:44:02 +0300
 

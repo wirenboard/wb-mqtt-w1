@@ -15,7 +15,9 @@ namespace
 {
     const char BULK_CONVERSION_TRIGGER[] = "trigger";
     const auto MAX_CONVERSION_TIME = milliseconds(2000);
-    const auto MAX_VALUE_CHANGE = 10 * 1000; // 1 degree per second for DEFAULT_POLL_INTERVALL_MS
+    const auto MAX_VALUE_CHANGE = 10 * 1000;    // 1 degree per second for DEFAULT_POLL_INTERVALL_MS
+    const auto MEASUREMENT_ERROR_VALUE = 85000; // sensor power on temperature value (read without conversion)
+    const auto MEASUREMENT_MAX_VALUE = 127937;  // max possible temperature value (for some chineese clones)
 
     std::unordered_map<std::string, int> lastValueMap;
 
@@ -61,7 +63,7 @@ namespace
         int dataInt = std::stoi(str.c_str());
 
         // Thermometer can't measure temperature?
-        if (dataInt == 85000) {
+        if (dataInt == MEASUREMENT_ERROR_VALUE) {
             auto it = lastValueMap.find(deviceFileName);
             if (it == lastValueMap.end() || abs(dataInt - it->second) > MAX_VALUE_CHANGE) {
                 throw TOneWireReadErrorException("Measurement error", deviceFileName);
@@ -69,7 +71,7 @@ namespace
         }
 
         // returned max possible temp, probably an error (it happens for chineese clones)
-        if (dataInt == 127937) {
+        if (dataInt == MEASUREMENT_MAX_VALUE) {
             throw TOneWireReadErrorException("Thermometer error", deviceFileName);
         }
 
