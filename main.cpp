@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
     WBMQTT::SignalHandling::SetOnTimeout(W1_DRIVER_STOP_TIMEOUT_S, [&] {
         LOG(Error) << "Driver takes too long to stop. Exiting.";
         cerr << "Error: W1_DRIVER_STOP_TIMEOUT_S" << endl;
-        exit(2);
+        exit(1);
     });
     WBMQTT::SignalHandling::Start();
 
@@ -147,18 +147,18 @@ int main(int argc, char* argv[])
 
     cout << "MQTT broker " << mqttConfig.Host << ':' << mqttConfig.Port << endl;
 
-    auto mqttDriver =
-        WBMQTT::NewDriver(WBMQTT::TDriverArgs{}
-                              .SetBackend(WBMQTT::NewDriverBackend(WBMQTT::NewMosquittoMqttClient(mqttConfig)))
-                              .SetId(mqttConfig.Id)
-                              .SetUseStorage(false)
-                              .SetReownUnknownDevices(true)
-                              .SetStoragePath(WBMQTT_DB_FILE));
-
-    mqttDriver->StartLoop();
-    mqttDriver->WaitForReady();
-
     try {
+        auto mqttDriver =
+            WBMQTT::NewDriver(WBMQTT::TDriverArgs{}
+                                  .SetBackend(WBMQTT::NewDriverBackend(WBMQTT::NewMosquittoMqttClient(mqttConfig)))
+                                  .SetId(mqttConfig.Id)
+                                  .SetUseStorage(false)
+                                  .SetReownUnknownDevices(true)
+                                  .SetStoragePath(WBMQTT_DB_FILE));
+
+        mqttDriver->StartLoop();
+        mqttDriver->WaitForReady();
+
         {
             TThreadedPeriodicalRunner r(
                 std::unique_ptr<IPeriodicalWorker>(
@@ -178,5 +178,5 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-    return 0;
+    return 7;
 }

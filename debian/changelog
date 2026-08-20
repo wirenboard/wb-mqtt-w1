@@ -1,3 +1,11 @@
+wb-mqtt-w1 (2.5.0) stable; urgency=medium
+
+  * Clean exit instead of SIGABRT on unreachable broker at start
+  * Exit with 7 on SIGTERM/SIGINT, 1 on stop timeout
+  * systemd unit: Restart=on-failure, codes 2 and 6 are not restarted, 7 is success, start after mosquitto, drop disabled start limit
+
+ -- Ekaterina Volkova <ekaterina.volkova@wirenboard.com>  Thu, 20 Aug 2026 13:18:25 +0000
+
 wb-mqtt-w1 (2.4.1) stable; urgency=medium
 
   * Fix coverage reporting with GNU make 4.4 (trixie): export coverage
