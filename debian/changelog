@@ -1,3 +1,11 @@
+wb-mqtt-w1 (2.4.2) stable; urgency=medium
+
+  * Fix restart loop on systems without loaded 1-Wire kernel modules:
+    a missing /sys/bus/w1/devices folder is reported once instead of
+    terminating the daemon
+
+ -- Nikolay Korotkiy <nikolay.korotkiy@wirenboard.com>  Mon, 31 Aug 2026 17:20:00 +0400
+
 wb-mqtt-w1 (2.4.1) stable; urgency=medium
 
   * Fix coverage reporting with GNU make 4.4 (trixie): export coverage
