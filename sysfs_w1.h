@@ -101,6 +101,7 @@ private:
     std::string DevicesDir;
     WBMQTT::TLogger& DebugLogger;
     WBMQTT::TLogger& ErrorLogger;
+    bool ScanError;
 
     std::unordered_map<std::string, std::shared_ptr<TSysfsOneWireThermometer>> Devices;
 };

@@ -132,3 +132,10 @@ TEST_F(TSysfsOnewireManagerTest, 2_buses)
     auto m = TSysfsOneWireManager(test_sensor_root_dir + string("2_buses/"), Debug, Error);
     EXPECT_EQ(m.RescanBusAndRead().size(), 2);
 }
+
+TEST_F(TSysfsOnewireManagerTest, no_devices_dir)
+{
+    auto m = TSysfsOneWireManager(test_sensor_root_dir + string("no_such_dir/"), Debug, Error);
+    EXPECT_NO_THROW(m.RescanBusAndRead());
+    EXPECT_NO_THROW(m.RescanBusAndRead());
+}

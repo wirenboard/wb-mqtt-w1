@@ -176,7 +176,8 @@ TSysfsOneWireManager::TSysfsOneWireManager(const std::string& devicesDir,
                                            WBMQTT::TLogger& errorLogger)
     : DevicesDir(devicesDir),
       DebugLogger(debugLogger),
-      ErrorLogger(errorLogger)
+      ErrorLogger(errorLogger),
+      ScanError(false)
 {}
 
 std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::RescanBusAndRead()
@@ -189,40 +190,52 @@ std::vector<std::shared_ptr<TSysfsOneWireThermometer>> TSysfsOneWireManager::Res
 
     std::vector<TBusMaster> busMasters;
 
-    IterateDir(DevicesDir, [&](const auto& name) {
-        if (!WBMQTT::StringStartsWith(name, "w1_bus_master")) {
-            return false;
-        }
-        TBusMaster bm;
-        bm.Dir = DevicesDir + name;
-        bm.SupportsBulkRead = (access((bm.Dir + "/therm_bulk_read").c_str(), F_OK) == 0);
-        busMasters.push_back(bm);
+    try {
+        IterateDir(DevicesDir, [&](const auto& name) {
+            if (!WBMQTT::StringStartsWith(name, "w1_bus_master")) {
+                return false;
+            }
+            TBusMaster bm;
+            bm.Dir = DevicesDir + name;
+            bm.SupportsBulkRead = (access((bm.Dir + "/therm_bulk_read").c_str(), F_OK) == 0);
+            busMasters.push_back(bm);
 
-        if (bm.SupportsBulkRead) {
-            RunBulkRead(bm.Dir + "/therm_bulk_read", ErrorLogger);
-        }
+            if (bm.SupportsBulkRead) {
+                RunBulkRead(bm.Dir + "/therm_bulk_read", ErrorLogger);
+            }
 
-        IterateDir(bm.Dir, [&](const auto& name) {
-            for (const auto& prefix: prefixes) {
-                if (WBMQTT::StringStartsWith(name, prefix)) {
-                    auto it = Devices.find(name);
-                    if (it == Devices.end()) {
-                        it =
-                            Devices
-                                .insert({name,
+            IterateDir(bm.Dir, [&](const auto& name) {
+                for (const auto& prefix: prefixes) {
+                    if (WBMQTT::StringStartsWith(name, prefix)) {
+                        auto it = Devices.find(name);
+                        if (it == Devices.end()) {
+                            it =
+                                Devices
+                                    .insert(
+                                        {name,
                                          std::make_shared<TSysfsOneWireThermometer>(name, bm.Dir, bm.SupportsBulkRead)})
-                                .first;
-                    } else {
-                        if (!it->second->FoundAgain(bm.Dir)) {
-                            LOG(DebugLogger) << name << " is switched to " << bm.Dir;
+                                    .first;
+                        } else {
+                            if (!it->second->FoundAgain(bm.Dir)) {
+                                LOG(DebugLogger) << name << " is switched to " << bm.Dir;
+                            }
                         }
                     }
                 }
-            }
+                return false;
+            });
             return false;
         });
-        return false;
-    });
+        if (ScanError) {
+            LOG(DebugLogger) << DevicesDir << " is available again";
+            ScanError = false;
+        }
+    } catch (const TNoDirError& e) {
+        if (!ScanError) {
+            LOG(ErrorLogger) << "Can't scan " << DevicesDir << ": " << e.what();
+            ScanError = true;
+        }
+    }
 
     auto time = steady_clock::now();
     bool inConversion = true;
