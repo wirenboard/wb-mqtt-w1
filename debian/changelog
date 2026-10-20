@@ -1,3 +1,11 @@
+wb-mqtt-w1 (2.4.3) stable; urgency=medium
+
+  * Start the service after mosquitto
+  * Restart the service after 1 to 3 seconds (growing exponentially)
+    instead of 20 seconds
+
+ -- Petr Krasnoshchekov <petr.krasnoshchekov@wirenboard.com>  Tue, 20 Oct 2026 05:54:45 +0000
+
 wb-mqtt-w1 (2.4.2) stable; urgency=medium
 
   * Fix restart loop on systems without loaded 1-Wire kernel modules:
